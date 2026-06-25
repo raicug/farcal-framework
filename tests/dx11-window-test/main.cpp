@@ -64,7 +64,7 @@ int main()
     AdjustWindowRect(&window_rect, WS_OVERLAPPEDWINDOW, FALSE);
 
     char title[128] {};
-    std::snprintf(title, sizeof(title), "DX11 Window Test - framework %s", framework::version());
+    std::snprintf(title, sizeof(title), "DX11 Window Test - Farcal %s", farcal::version());
 
     HWND window = CreateWindowExW(
         0,

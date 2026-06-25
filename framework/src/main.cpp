@@ -1,6 +1,6 @@
 #include <framework/framework.hpp>
 
-namespace framework {
+namespace farcal {
 
 const char* version()
 {

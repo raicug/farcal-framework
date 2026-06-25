@@ -1,6 +1,6 @@
 #pragma once
 
-namespace framework {
+namespace farcal {
 
 const char* version();
 

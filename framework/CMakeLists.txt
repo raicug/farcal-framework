@@ -2,7 +2,7 @@ add_library(framework STATIC
     src/main.cpp
 )
 
-add_library(ui::framework ALIAS framework)
+add_library(farcal::framework ALIAS framework)
 
 target_compile_features(framework PUBLIC cxx_std_20)
 

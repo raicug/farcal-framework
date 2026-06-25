@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(ui-framework LANGUAGES CXX)
+project(farcal LANGUAGES CXX)
 
 set(UI_FRAMEWORK_CHANNEL "local" CACHE STRING "Output channel name used under bin/<channel>/<config>.")
 
