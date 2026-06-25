@@ -1,5 +1,11 @@
 add_library(framework STATIC
+    src/backends/dx11.cpp
+    src/context.cpp
+    src/draw.cpp
+    src/input.cpp
     src/main.cpp
+    src/widgets.cpp
+    src/win32/window.cpp
 )
 
 add_library(farcal::framework ALIAS framework)
@@ -9,4 +15,15 @@ target_compile_features(framework PUBLIC cxx_std_20)
 target_include_directories(framework
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(framework
+    PUBLIC
+        user32
+        d3d11
+        dxgi
+        dxguid
+        d3dcompiler
+        d2d1
+        dwrite
 )
