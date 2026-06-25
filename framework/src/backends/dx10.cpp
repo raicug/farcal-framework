@@ -1,5 +1,5 @@
 // clang-format off
-#include <framework/backends/dx11.hpp>
+#include <framework/backends/dx10.hpp>
 
 #include <d2d1.h>
 #include <d3dcompiler.h>
@@ -189,7 +189,7 @@ D2D1_COLOR_F to_d2d(color value)
 
 }
 
-dx11_renderer::dx11_renderer(window& target)
+dx10_renderer::dx10_renderer(window& target)
     : window_(&target)
 {
     if (create_device()) {
@@ -199,23 +199,23 @@ dx11_renderer::dx11_renderer(window& target)
     }
 }
 
-dx11_renderer::~dx11_renderer()
+dx10_renderer::~dx10_renderer()
 {
     release();
 }
 
-bool dx11_renderer::valid() const
+bool dx10_renderer::valid() const
 {
-    return device_ != nullptr && context_ != nullptr && swap_chain_ != nullptr && render_target_ != nullptr;
+    return device_ != nullptr && swap_chain_ != nullptr && render_target_ != nullptr;
 }
 
-void dx11_renderer::resize(int width, int height)
+void dx10_renderer::resize(int width, int height)
 {
     if (swap_chain_ == nullptr || width <= 0 || height <= 0) {
         return;
     }
 
-    context_->OMSetRenderTargets(0, nullptr, nullptr);
+    device_->OMSetRenderTargets(0, nullptr, nullptr);
     release_render_target();
 
     const HRESULT result = swap_chain_->ResizeBuffers(0, static_cast<UINT>(width), static_cast<UINT>(height), DXGI_FORMAT_UNKNOWN, 0);
@@ -229,7 +229,7 @@ void dx11_renderer::resize(int width, int height)
     create_text_pipeline();
 }
 
-void dx11_renderer::render(const draw_data& data)
+void dx10_renderer::render(const draw_data& data)
 {
     if (!valid()) {
         return;
@@ -240,8 +240,8 @@ void dx11_renderer::render(const draw_data& data)
     }
 
     constexpr float clear_color[] {0.090F, 0.102F, 0.122F, 1.0F};
-    context_->OMSetRenderTargets(1, &render_target_, nullptr);
-    context_->ClearRenderTargetView(render_target_, clear_color);
+    device_->OMSetRenderTargets(1, &render_target_, nullptr);
+    device_->ClearRenderTargetView(render_target_, clear_color);
 
     if (vertex_shader_ == nullptr || pixel_shader_ == nullptr || input_layout_ == nullptr) {
         return;
@@ -267,36 +267,36 @@ void dx11_renderer::render(const draw_data& data)
             return;
         }
 
-        D3D11_MAPPED_SUBRESOURCE mapped {};
-        if (FAILED(context_->Map(vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+        void* mapped {};
+        if (FAILED(vertex_buffer_->Map(D3D10_MAP_WRITE_DISCARD, 0, &mapped))) {
             vertices.clear();
             indices.clear();
             batches.clear();
             return;
         }
-        std::memcpy(mapped.pData, vertices.data(), vertices.size() * sizeof(vertex));
-        context_->Unmap(vertex_buffer_, 0);
+        std::memcpy(mapped, vertices.data(), vertices.size() * sizeof(vertex));
+        vertex_buffer_->Unmap();
 
-        if (FAILED(context_->Map(index_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+        if (FAILED(index_buffer_->Map(D3D10_MAP_WRITE_DISCARD, 0, &mapped))) {
             vertices.clear();
             indices.clear();
             batches.clear();
             return;
         }
-        std::memcpy(mapped.pData, indices.data(), indices.size() * sizeof(std::uint32_t));
-        context_->Unmap(index_buffer_, 0);
+        std::memcpy(mapped, indices.data(), indices.size() * sizeof(std::uint32_t));
+        index_buffer_->Unmap();
 
         const UINT stride = sizeof(vertex);
         const UINT offset = 0;
-        context_->IASetVertexBuffers(0, 1, &vertex_buffer_, &stride, &offset);
-        context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+        device_->IASetVertexBuffers(0, 1, &vertex_buffer_, &stride, &offset);
+        device_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 
         for (const render_batch& batch : batches) {
             if (batch.index_count == 0) {
                 continue;
             }
 
-            D3D11_RECT scissor {
+            D3D10_RECT scissor {
                 static_cast<LONG>((std::max)(0.0F, batch.clip.min.x)),
                 static_cast<LONG>((std::max)(0.0F, batch.clip.min.y)),
                 static_cast<LONG>((std::min)(static_cast<float>(window_->width()), batch.clip.max.x)),
@@ -307,8 +307,8 @@ void dx11_renderer::render(const draw_data& data)
                 continue;
             }
 
-            context_->RSSetScissorRects(1, &scissor);
-            context_->DrawIndexed(batch.index_count, batch.index_start, 0);
+            device_->RSSetScissorRects(1, &scissor);
+            device_->DrawIndexed(batch.index_count, batch.index_start, 0);
         }
 
         vertices.clear();
@@ -328,23 +328,23 @@ void dx11_renderer::render(const draw_data& data)
     };
 
     constants constant_data {{static_cast<float>(window_->width()), static_cast<float>(window_->height())}, {0.0F, 0.0F}};
-    context_->UpdateSubresource(constant_buffer_, 0, nullptr, &constant_data, 0, 0);
+    device_->UpdateSubresource(constant_buffer_, 0, nullptr, &constant_data, 0, 0);
 
-    D3D11_VIEWPORT viewport {};
+    D3D10_VIEWPORT viewport {};
     viewport.Width = static_cast<float>(window_->width());
     viewport.Height = static_cast<float>(window_->height());
     viewport.MinDepth = 0.0F;
     viewport.MaxDepth = 1.0F;
 
     const float blend_factor[4] {};
-    context_->RSSetViewports(1, &viewport);
-    context_->RSSetState(rasterizer_state_);
-    context_->OMSetBlendState(blend_state_, blend_factor, 0xFFFFFFFF);
-    context_->IASetInputLayout(input_layout_);
-    context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    context_->VSSetShader(vertex_shader_, nullptr, 0);
-    context_->VSSetConstantBuffers(0, 1, &constant_buffer_);
-    context_->PSSetShader(pixel_shader_, nullptr, 0);
+    device_->RSSetViewports(1, &viewport);
+    device_->RSSetState(rasterizer_state_);
+    device_->OMSetBlendState(blend_state_, blend_factor, 0xFFFFFFFF);
+    device_->IASetInputLayout(input_layout_);
+    device_->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    device_->VSSetShader(vertex_shader_);
+    device_->VSSetConstantBuffers(0, 1, &constant_buffer_);
+    device_->PSSetShader(pixel_shader_);
 
     for (const draw_command& command : data.commands) {
         if (command.type == draw_command_type::text) {
@@ -360,47 +360,79 @@ void dx11_renderer::render(const draw_data& data)
     flush_text();
 }
 
-void dx11_renderer::present()
+void dx10_renderer::present()
 {
     if (swap_chain_ != nullptr) {
         swap_chain_->Present(1, 0);
     }
 }
 
-bool dx11_renderer::create_device()
+bool dx10_renderer::create_device()
 {
     DXGI_SWAP_CHAIN_DESC swap_chain_desc {};
     swap_chain_desc.BufferCount = 2;
     swap_chain_desc.BufferDesc.Width = static_cast<UINT>(window_->width());
     swap_chain_desc.BufferDesc.Height = static_cast<UINT>(window_->height());
     swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swap_chain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swap_chain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swap_chain_desc.OutputWindow = window_->native_handle();
     swap_chain_desc.SampleDesc.Count = 1;
     swap_chain_desc.Windowed = TRUE;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
-    D3D_FEATURE_LEVEL feature_level {};
-    constexpr D3D_FEATURE_LEVEL feature_levels[] {
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1,
-        D3D_FEATURE_LEVEL_10_0,
-    };
-
-    const HRESULT result = D3D11CreateDeviceAndSwapChain(
+    UINT create_device_flags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
+    HRESULT result = D3D10CreateDeviceAndSwapChain1(
         nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
+        D3D10_DRIVER_TYPE_HARDWARE,
         nullptr,
-        D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-        feature_levels,
-        static_cast<UINT>(std::size(feature_levels)),
-        D3D11_SDK_VERSION,
+        create_device_flags,
+        D3D10_FEATURE_LEVEL_10_1,
+        D3D10_1_SDK_VERSION,
         &swap_chain_desc,
         &swap_chain_,
-        &device_,
-        &feature_level,
-        &context_);
+        &device_);
+
+    if (FAILED(result)) {
+        result = D3D10CreateDeviceAndSwapChain1(
+            nullptr,
+            D3D10_DRIVER_TYPE_HARDWARE,
+            nullptr,
+            create_device_flags,
+            D3D10_FEATURE_LEVEL_10_0,
+            D3D10_1_SDK_VERSION,
+            &swap_chain_desc,
+            &swap_chain_,
+            &device_);
+    }
+
+    if (FAILED(result)) {
+        result = D3D10CreateDeviceAndSwapChain1(
+            nullptr,
+            D3D10_DRIVER_TYPE_WARP,
+            nullptr,
+            create_device_flags,
+            D3D10_FEATURE_LEVEL_10_1,
+            D3D10_1_SDK_VERSION,
+            &swap_chain_desc,
+            &swap_chain_,
+            &device_);
+    }
+
+    if (FAILED(result)) {
+        result = D3D10CreateDeviceAndSwapChain1(
+            nullptr,
+            D3D10_DRIVER_TYPE_WARP,
+            nullptr,
+            create_device_flags,
+            D3D10_FEATURE_LEVEL_10_0,
+            D3D10_1_SDK_VERSION,
+            &swap_chain_desc,
+            &swap_chain_,
+            &device_);
+    }
 
     if (SUCCEEDED(result)) {
         back_buffer_width_ = window_->width();
@@ -411,10 +443,10 @@ bool dx11_renderer::create_device()
     return false;
 }
 
-bool dx11_renderer::create_render_target()
+bool dx10_renderer::create_render_target()
 {
-    ID3D11Texture2D* back_buffer = nullptr;
-    HRESULT result = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
+    ID3D10Texture2D* back_buffer = nullptr;
+    HRESULT result = swap_chain_->GetBuffer(0, __uuidof(ID3D10Texture2D), reinterpret_cast<void**>(&back_buffer));
     if (FAILED(result)) {
         return false;
     }
@@ -424,7 +456,7 @@ bool dx11_renderer::create_render_target()
     return SUCCEEDED(result);
 }
 
-bool dx11_renderer::create_pipeline()
+bool dx10_renderer::create_pipeline()
 {
     ID3DBlob* vertex_blob = nullptr;
     ID3DBlob* pixel_blob = nullptr;
@@ -443,23 +475,23 @@ bool dx11_renderer::create_pipeline()
         return false;
     }
 
-    result = device_->CreateVertexShader(vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), nullptr, &vertex_shader_);
+    result = device_->CreateVertexShader(vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), &vertex_shader_);
     if (FAILED(result)) {
         release_if_set(vertex_blob);
         release_if_set(pixel_blob);
         return false;
     }
 
-    result = device_->CreatePixelShader(pixel_blob->GetBufferPointer(), pixel_blob->GetBufferSize(), nullptr, &pixel_shader_);
+    result = device_->CreatePixelShader(pixel_blob->GetBufferPointer(), pixel_blob->GetBufferSize(), &pixel_shader_);
     if (FAILED(result)) {
         release_if_set(vertex_blob);
         release_if_set(pixel_blob);
         return false;
     }
 
-    constexpr D3D11_INPUT_ELEMENT_DESC input_elements[] {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    constexpr D3D10_INPUT_ELEMENT_DESC input_elements[] {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
 
     result = device_->CreateInputLayout(input_elements, static_cast<UINT>(std::size(input_elements)), vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), &input_layout_);
@@ -469,39 +501,39 @@ bool dx11_renderer::create_pipeline()
         return false;
     }
 
-    D3D11_BUFFER_DESC constants_desc {};
+    D3D10_BUFFER_DESC constants_desc {};
     constants_desc.ByteWidth = sizeof(constants);
-    constants_desc.Usage = D3D11_USAGE_DEFAULT;
-    constants_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    constants_desc.Usage = D3D10_USAGE_DEFAULT;
+    constants_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
     result = device_->CreateBuffer(&constants_desc, nullptr, &constant_buffer_);
     if (FAILED(result)) {
         return false;
     }
 
-    D3D11_BLEND_DESC blend_desc {};
-    blend_desc.RenderTarget[0].BlendEnable = TRUE;
-    blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-    blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-    blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-    blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-    blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    D3D10_BLEND_DESC blend_desc {};
+    blend_desc.BlendEnable[0] = TRUE;
+    blend_desc.SrcBlend = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.DestBlend = D3D10_BLEND_INV_SRC_ALPHA;
+    blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
+    blend_desc.SrcBlendAlpha = D3D10_BLEND_ONE;
+    blend_desc.DestBlendAlpha = D3D10_BLEND_INV_SRC_ALPHA;
+    blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
+    blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
     result = device_->CreateBlendState(&blend_desc, &blend_state_);
     if (FAILED(result)) {
         return false;
     }
 
-    D3D11_RASTERIZER_DESC rasterizer_desc {};
-    rasterizer_desc.FillMode = D3D11_FILL_SOLID;
-    rasterizer_desc.CullMode = D3D11_CULL_NONE;
+    D3D10_RASTERIZER_DESC rasterizer_desc {};
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_NONE;
     rasterizer_desc.ScissorEnable = TRUE;
     rasterizer_desc.DepthClipEnable = TRUE;
     result = device_->CreateRasterizerState(&rasterizer_desc, &rasterizer_state_);
     return SUCCEEDED(result);
 }
 
-bool dx11_renderer::create_text_pipeline()
+bool dx10_renderer::create_text_pipeline()
 {
     release_if_set(d2d_render_target_);
 
@@ -534,7 +566,7 @@ bool dx11_renderer::create_text_pipeline()
     return SUCCEEDED(result);
 }
 
-bool dx11_renderer::ensure_vertex_capacity(UINT capacity)
+bool dx10_renderer::ensure_vertex_capacity(UINT capacity)
 {
     if (vertex_buffer_ != nullptr && vertex_capacity_ >= capacity) {
         return true;
@@ -543,16 +575,16 @@ bool dx11_renderer::ensure_vertex_capacity(UINT capacity)
     release_if_set(vertex_buffer_);
     vertex_capacity_ = std::max<UINT>(capacity, vertex_capacity_ == 0 ? 1024 : vertex_capacity_ * 2);
 
-    D3D11_BUFFER_DESC desc {};
+    D3D10_BUFFER_DESC desc {};
     desc.ByteWidth = vertex_capacity_ * sizeof(vertex);
-    desc.Usage = D3D11_USAGE_DYNAMIC;
-    desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    desc.Usage = D3D10_USAGE_DYNAMIC;
+    desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+    desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
 
     return SUCCEEDED(device_->CreateBuffer(&desc, nullptr, &vertex_buffer_));
 }
 
-bool dx11_renderer::ensure_index_capacity(UINT capacity)
+bool dx10_renderer::ensure_index_capacity(UINT capacity)
 {
     if (index_buffer_ != nullptr && index_capacity_ >= capacity) {
         return true;
@@ -561,16 +593,16 @@ bool dx11_renderer::ensure_index_capacity(UINT capacity)
     release_if_set(index_buffer_);
     index_capacity_ = std::max<UINT>(capacity, index_capacity_ == 0 ? 2048 : index_capacity_ * 2);
 
-    D3D11_BUFFER_DESC desc {};
+    D3D10_BUFFER_DESC desc {};
     desc.ByteWidth = index_capacity_ * sizeof(std::uint32_t);
-    desc.Usage = D3D11_USAGE_DYNAMIC;
-    desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    desc.Usage = D3D10_USAGE_DYNAMIC;
+    desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
+    desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
 
     return SUCCEEDED(device_->CreateBuffer(&desc, nullptr, &index_buffer_));
 }
 
-IDWriteTextFormat* dx11_renderer::text_format(const draw_command& command)
+IDWriteTextFormat* dx10_renderer::text_format(const draw_command& command)
 {
     const std::wstring family = command.font_family.empty() ? L"Inter" : command.font_family;
     const float size = command.font_size;
@@ -613,7 +645,7 @@ IDWriteTextFormat* dx11_renderer::text_format(const draw_command& command)
     return format;
 }
 
-void dx11_renderer::render_text(const draw_data& data)
+void dx10_renderer::render_text(const draw_data& data)
 {
     if (d2d_render_target_ == nullptr || dwrite_factory_ == nullptr) {
         return;
@@ -631,9 +663,9 @@ void dx11_renderer::render_text(const draw_data& data)
         return;
     }
 
-    ID3D11RenderTargetView* null_render_target = nullptr;
-    context_->OMSetRenderTargets(1, &null_render_target, nullptr);
-    context_->Flush();
+    ID3D10RenderTargetView* null_render_target = nullptr;
+    device_->OMSetRenderTargets(1, &null_render_target, nullptr);
+    device_->Flush();
 
     d2d_render_target_->BeginDraw();
 
@@ -671,7 +703,7 @@ void dx11_renderer::render_text(const draw_data& data)
     }
 
     const HRESULT end_result = d2d_render_target_->EndDraw();
-    context_->OMSetRenderTargets(1, &render_target_, nullptr);
+    device_->OMSetRenderTargets(1, &render_target_, nullptr);
 
     if (end_result == D2DERR_RECREATE_TARGET) {
         release_if_set(d2d_render_target_);
@@ -679,13 +711,13 @@ void dx11_renderer::render_text(const draw_data& data)
     }
 }
 
-void dx11_renderer::release_render_target()
+void dx10_renderer::release_render_target()
 {
     release_if_set(d2d_render_target_);
     release_if_set(render_target_);
 }
 
-void dx11_renderer::release()
+void dx10_renderer::release()
 {
     for (text_format_cache_entry& entry : text_format_cache_) {
         release_if_set(entry.format);
@@ -704,7 +736,6 @@ void dx11_renderer::release()
     release_if_set(dwrite_factory_);
     release_if_set(d2d_factory_);
     release_if_set(swap_chain_);
-    release_if_set(context_);
     release_if_set(device_);
 }
 

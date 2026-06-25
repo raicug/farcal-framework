@@ -1,4 +1,5 @@
 add_library(framework STATIC
+    src/backends/dx10.cpp
     src/backends/dx11.cpp
     src/context.cpp
     src/draw.cpp
@@ -20,6 +21,8 @@ target_include_directories(framework
 target_link_libraries(framework
     PUBLIC
         user32
+        d3d10
+        d3d10_1
         d3d11
         dxgi
         dxguid

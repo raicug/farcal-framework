@@ -1,6 +1,7 @@
 #pragma once
 
 // clang-format off
+#include <framework/backends/dx10.hpp>
 #include <framework/backends/dx11.hpp>
 #include <framework/context.hpp>
 #include <framework/draw.hpp>
