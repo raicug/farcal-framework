@@ -60,4 +60,12 @@ void window_panel(std::string_view title, Callback&& callback)
     end_window();
 }
 
+template <std::invocable Callback>
+void group(Callback&& callback)
+{
+    begin_group();
+    callback();
+    end_group();
+}
+
 }
