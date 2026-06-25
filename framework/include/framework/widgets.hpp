@@ -1,6 +1,8 @@
 #pragma once
 
 // clang-format off
+#include <framework/draw.hpp>
+
 #include <concepts>
 #include <string_view>
 // clang-format on
@@ -13,6 +15,16 @@ void title_text(std::string_view value);
 void section_text(std::string_view value);
 void separator();
 void spacing();
+void same_line(float spacing = -1.0F);
+void begin_group();
+void end_group();
+void indent(float width = 0.0F);
+void unindent(float width = 0.0F);
+void dummy(vec2 size);
+void set_next_item_width(float width);
+bool is_item_hovered();
+bool is_item_active();
+bool is_item_focused();
 bool button(std::string_view label);
 bool primary_button(std::string_view label);
 bool begin_window(std::string_view title);

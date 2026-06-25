@@ -68,6 +68,21 @@ int main()
                     });
 
                     farcal::spacing();
+                    farcal::section_text("Core Layout");
+                    farcal::begin_group();
+                    farcal::set_next_item_width(104.0F);
+                    farcal::button("Left");
+                    farcal::same_line();
+                    farcal::set_next_item_width(104.0F);
+                    farcal::button("Right");
+                    farcal::end_group();
+
+                    farcal::indent();
+                    farcal::text_secondary(farcal::is_item_hovered() ? "group hovered" : "group idle");
+                    farcal::unindent();
+                    farcal::dummy({1.0F, 6.0F});
+
+                    farcal::spacing();
                     farcal::section_text("Scrollable Assets");
 
                     for (int index = 0; index < 24; ++index) {
