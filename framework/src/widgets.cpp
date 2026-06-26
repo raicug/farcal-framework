@@ -199,6 +199,12 @@ item_result item_behavior(std::uint64_t id, rect bounds)
     };
 }
 
+bool keyboard_toggle(std::uint64_t id)
+{
+    const input_state& io = input();
+    return focused_item == id && (io.key_pressed[13] || io.key_pressed[32]);
+}
+
 void add_text(rect bounds, std::string_view value, color tint)
 {
     const style& theme = current_style();
@@ -220,6 +226,7 @@ void add_filled_rect(rect bounds, color tint)
         .bounds = bounds,
         .clip = command_clip(bounds),
         .tint = tint,
+        .anti_aliasing = current_style().anti_aliasing,
     });
 }
 
@@ -231,17 +238,36 @@ void add_rect(rect bounds, color tint, float thickness = 1.0F)
         .clip = command_clip(bounds),
         .tint = tint,
         .thickness = thickness,
+        .anti_aliasing = current_style().anti_aliasing,
+    });
+}
+
+void add_line(vec2 start, vec2 end, color tint, float thickness)
+{
+    const rect bounds {
+        {std::min(start.x, end.x), std::min(start.y, end.y)},
+        {std::max(start.x, end.x), std::max(start.y, end.y)},
+    };
+
+    mutable_draw().commands.push_back({
+        .type = draw_command_type::line,
+        .clip = command_clip(bounds),
+        .start = start,
+        .end = end,
+        .tint = tint,
+        .thickness = thickness,
+        .anti_aliasing = current_style().anti_aliasing,
     });
 }
 
 void add_hline(float x0, float x1, float y, color tint)
 {
-    add_filled_rect({{x0, y}, {x1, y + 1.0F}}, tint);
+    add_line({x0, y + 0.5F}, {x1, y + 0.5F}, tint, 1.0F);
 }
 
 void add_vline(float x, float y0, float y1, color tint)
 {
-    add_filled_rect({{x, y0}, {x + 1.0F, y1}}, tint);
+    add_line({x + 0.5F, y0}, {x + 0.5F, y1}, tint, 1.0F);
 }
 
 void add_soft_rect(rect bounds, float radius, color tint)
@@ -256,14 +282,17 @@ void add_soft_rect(rect bounds, float radius, color tint)
 
 void add_soft_outline(rect bounds, float radius, color tint)
 {
-    add_hline(bounds.min.x + radius, bounds.max.x - radius, bounds.min.y, tint);
-    add_hline(bounds.min.x + radius, bounds.max.x - radius, bounds.max.y - 1.0F, tint);
-    add_vline(bounds.min.x, bounds.min.y + radius, bounds.max.y - radius, tint);
-    add_vline(bounds.max.x - 1.0F, bounds.min.y + radius, bounds.max.y - radius, tint);
-    add_filled_rect({{bounds.min.x + 1.0F, bounds.min.y + 1.0F}, {bounds.min.x + radius, bounds.min.y + 2.0F}}, tint);
-    add_filled_rect({{bounds.max.x - radius, bounds.min.y + 1.0F}, {bounds.max.x - 1.0F, bounds.min.y + 2.0F}}, tint);
-    add_filled_rect({{bounds.min.x + 1.0F, bounds.max.y - 2.0F}, {bounds.min.x + radius, bounds.max.y - 1.0F}}, tint);
-    add_filled_rect({{bounds.max.x - radius, bounds.max.y - 2.0F}, {bounds.max.x - 1.0F, bounds.max.y - 1.0F}}, tint);
+    (void)radius;
+
+    const float left = bounds.min.x + 0.5F;
+    const float top = bounds.min.y + 0.5F;
+    const float right = bounds.max.x - 0.5F;
+    const float bottom = bounds.max.y - 0.5F;
+
+    add_line({left, top}, {right, top}, tint, 1.0F);
+    add_line({right, top}, {right, bottom}, tint, 1.0F);
+    add_line({right, bottom}, {left, bottom}, tint, 1.0F);
+    add_line({left, bottom}, {left, top}, tint, 1.0F);
 }
 
 bool button_impl(std::string_view label, color normal, color hovered_color, color active_color, color text_color)
@@ -454,6 +483,52 @@ bool primary_button(std::string_view label)
 {
     const style& theme = current_style();
     return button_impl(label, theme.button_primary, theme.button_primary_hovered, theme.button_primary_active, {1.0F, 1.0F, 1.0F, 1.0F});
+}
+
+bool checkbox(std::string_view label, bool* value)
+{
+    ensure_layout();
+    if (value == nullptr) {
+        return false;
+    }
+
+    const style& theme = current_style();
+    const float scale = theme.frame_scale;
+    const float height = 24.0F * scale;
+    const float box_size = 16.0F * scale;
+    const float gap = 10.0F * scale;
+    const float label_width = text_width(label);
+    const float width = layout.content_width > 0.0F ? layout.content_width : box_size + gap + label_width;
+    const rect bounds = next_rect(width, height);
+    const std::uint64_t id = current_id(label);
+    const item_result item = item_behavior(id, bounds);
+    const bool changed = item.clicked || keyboard_toggle(id);
+
+    if (changed) {
+        *value = !*value;
+    }
+
+    const float box_y = bounds.min.y + (height - box_size) * 0.5F;
+    const rect box {{bounds.min.x, box_y}, {bounds.min.x + box_size, box_y + box_size}};
+    const color unchecked_fill = item.active ? theme.button_active : item.hovered ? theme.button_hovered : theme.button;
+    const color checked_fill = item.active ? theme.button_primary_active : item.hovered ? theme.button_primary_hovered : theme.button_primary;
+    const color fill = *value ? checked_fill : unchecked_fill;
+    const color border = item.focused ? theme.accent : *value ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.82F} : item.hovered ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.34F} : theme.button_border;
+
+    add_filled_rect({{box.min.x + 1.0F, box.min.y + 1.0F}, {box.max.x - 1.0F, box.max.y - 1.0F}}, fill);
+    add_hline(box.min.x + 1.0F, box.max.x - 1.0F, box.min.y + 1.0F, item.hovered ? color {1.0F, 1.0F, 1.0F, 0.12F} : color {1.0F, 1.0F, 1.0F, 0.05F});
+    add_soft_outline(box, 0.0F, border);
+
+    if (*value) {
+        const color mark {1.0F, 1.0F, 1.0F, 0.96F};
+        add_line({box.min.x + 4.4F * scale, box.min.y + 8.3F * scale}, {box.min.x + 7.0F * scale, box.min.y + 10.8F * scale}, mark, 1.35F * scale);
+        add_line({box.min.x + 7.0F * scale, box.min.y + 10.8F * scale}, {box.min.x + 12.0F * scale, box.min.y + 5.7F * scale}, mark, 1.35F * scale);
+    }
+
+    const color text_color = *value ? theme.text : theme.text_secondary;
+    add_text({{box.max.x + gap, bounds.min.y + 2.0F * scale}, bounds.max}, label, text_color);
+
+    return changed;
 }
 
 bool begin_window(std::string_view title)

@@ -39,6 +39,7 @@ enum class style_var {
     window_height,
     window_title_height,
     section_spacing_y,
+    anti_aliasing,
 };
 
 struct style {
@@ -69,6 +70,7 @@ struct style {
     float window_height {412.0F};
     float window_title_height {40.0F};
     float section_spacing_y {20.0F};
+    float anti_aliasing {1.0F};
     std::wstring font_family {L"Inter"};
 };
 

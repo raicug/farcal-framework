@@ -40,6 +40,7 @@ struct draw_command {
     vec2 end {};
     color tint {};
     float thickness {1.0F};
+    float anti_aliasing {1.0F};
     float font_size {16.0F};
     std::string text {};
     std::wstring font_family {};

@@ -27,6 +27,7 @@ bool is_item_active();
 bool is_item_focused();
 bool button(std::string_view label);
 bool primary_button(std::string_view label);
+bool checkbox(std::string_view label, bool* value);
 bool begin_window(std::string_view title);
 void end_window();
 

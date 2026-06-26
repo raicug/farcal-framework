@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 #include <iterator>
 #include <string>
 #include <string_view>
@@ -108,6 +109,32 @@ void push_rect(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indice
     batches.back().index_count += 6;
 }
 
+color alpha(color value, float multiplier)
+{
+    value.a *= multiplier;
+    return value;
+}
+
+void push_quad(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, vec2 a, vec2 b, vec2 c, vec2 d, rect clip, color ca, color cb, color cc, color cd)
+{
+    begin_batch(batches, clip, static_cast<UINT>(indices.size()));
+
+    const std::uint32_t base = static_cast<std::uint32_t>(vertices.size());
+    vertices.push_back({{a.x, a.y}, {ca.r, ca.g, ca.b, ca.a}});
+    vertices.push_back({{b.x, b.y}, {cb.r, cb.g, cb.b, cb.a}});
+    vertices.push_back({{c.x, c.y}, {cc.r, cc.g, cc.b, cc.a}});
+    vertices.push_back({{d.x, d.y}, {cd.r, cd.g, cd.b, cd.a}});
+
+    indices.push_back(base);
+    indices.push_back(base + 1);
+    indices.push_back(base + 2);
+    indices.push_back(base);
+    indices.push_back(base + 2);
+    indices.push_back(base + 3);
+
+    batches.back().index_count += 6;
+}
+
 rect clipped(rect bounds, rect clip)
 {
     return {
@@ -147,6 +174,49 @@ void push_line_rect_clipped(std::vector<vertex>& vertices, std::vector<std::uint
     push_rect(vertices, indices, batches, clipped({{bounds.max.x - thickness, bounds.min.y}, bounds.max}, clip), clip, tint);
 }
 
+void push_line_segment(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, vec2 start, vec2 end, rect clip, color tint, float thickness, float anti_aliasing)
+{
+    if (empty_clip(clip)) {
+        return;
+    }
+
+    const float dx = end.x - start.x;
+    const float dy = end.y - start.y;
+    const float length = std::sqrt(dx * dx + dy * dy);
+    if (length <= 0.001F) {
+        return;
+    }
+
+    const float dir_x = dx / length;
+    const float dir_y = dy / length;
+    const float normal_x = -dir_y;
+    const float normal_y = dir_x;
+    const float half = (std::max)(0.5F, thickness * 0.5F);
+    const float feather = (std::max)(0.0F, anti_aliasing);
+    const vec2 a {start.x + normal_x * half, start.y + normal_y * half};
+    const vec2 b {end.x + normal_x * half, end.y + normal_y * half};
+    const vec2 c {end.x - normal_x * half, end.y - normal_y * half};
+    const vec2 d {start.x - normal_x * half, start.y - normal_y * half};
+
+    push_quad(vertices, indices, batches, a, b, c, d, clip, tint, tint, tint, tint);
+
+    if (feather <= 0.0F) {
+        return;
+    }
+
+    const color transparent = alpha(tint, 0.0F);
+    const float outer = half + feather;
+    const vec2 outer_a {start.x + normal_x * outer - dir_x * feather, start.y + normal_y * outer - dir_y * feather};
+    const vec2 outer_b {end.x + normal_x * outer + dir_x * feather, end.y + normal_y * outer + dir_y * feather};
+    const vec2 outer_c {end.x - normal_x * outer + dir_x * feather, end.y - normal_y * outer + dir_y * feather};
+    const vec2 outer_d {start.x - normal_x * outer - dir_x * feather, start.y - normal_y * outer - dir_y * feather};
+
+    push_quad(vertices, indices, batches, outer_a, outer_b, b, a, clip, transparent, transparent, tint, tint);
+    push_quad(vertices, indices, batches, d, c, outer_c, outer_d, clip, tint, tint, transparent, transparent);
+    push_quad(vertices, indices, batches, outer_d, outer_a, a, d, clip, transparent, transparent, tint, tint);
+    push_quad(vertices, indices, batches, b, outer_b, outer_c, c, clip, tint, transparent, transparent, tint);
+}
+
 void append_command_geometry(const draw_command& command, int width, int height, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches)
 {
     switch (command.type) {
@@ -162,7 +232,7 @@ void append_command_geometry(const draw_command& command, int width, int height,
         break;
 
     case draw_command_type::line:
-        push_line_rect(vertices, indices, batches, {command.start, command.end}, effective_clip(command.clip, width, height), command.tint, command.thickness);
+        push_line_segment(vertices, indices, batches, command.start, command.end, effective_clip(command.clip, width, height), command.tint, command.thickness, command.anti_aliasing);
         break;
 
     case draw_command_type::text:

@@ -27,6 +27,8 @@ int main()
         farcal::dx11_renderer renderer(window);
         bool clicked = false;
         bool compiling = false;
+        bool vsync = true;
+        bool diagnostics = false;
 
         while (window.poll_events()) {
             farcal::begin_frame(window.consume_input());
@@ -51,6 +53,11 @@ int main()
                     farcal::button(compiling ? "Queued" : "Queue Task", [&] {
                         compiling = !compiling;
                     });
+
+                    farcal::push_style_var(farcal::style_var::anti_aliasing, 1.35F);
+                    farcal::checkbox("VSync", &vsync);
+                    farcal::checkbox("Diagnostics Overlay", &diagnostics);
+                    farcal::pop_style_var();
 
                     farcal::spacing();
                     farcal::section_text("Status");

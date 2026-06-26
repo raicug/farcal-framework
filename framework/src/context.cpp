@@ -100,6 +100,8 @@ float& var_ref(style& theme, style_var variable)
         return theme.window_title_height;
     case style_var::section_spacing_y:
         return theme.section_spacing_y;
+    case style_var::anti_aliasing:
+        return theme.anti_aliasing;
     }
 
     return theme.font_size;
