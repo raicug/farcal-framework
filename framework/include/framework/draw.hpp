@@ -8,46 +8,46 @@
 
 namespace farcal {
 
-struct vec2 {
-    float x {};
-    float y {};
+struct Vec2 {
+    float X {};
+    float Y {};
 };
 
-struct color {
-    float r {};
-    float g {};
-    float b {};
-    float a {1.0F};
+struct Color {
+    float R {};
+    float G {};
+    float B {};
+    float A {1.0F};
 };
 
-struct rect {
-    vec2 min {};
-    vec2 max {};
+struct Rect {
+    Vec2 Min {};
+    Vec2 Max {};
 };
 
-enum class draw_command_type {
-    filled_rect,
-    rect,
-    line,
-    text,
+enum class DrawCommandType {
+    FilledRect,
+    Rect,
+    Line,
+    Text,
 };
 
-struct draw_command {
-    draw_command_type type {};
-    rect bounds {};
-    rect clip {};
-    vec2 start {};
-    vec2 end {};
-    color tint {};
-    float thickness {1.0F};
-    float anti_aliasing {1.0F};
-    float font_size {16.0F};
-    std::string text {};
-    std::wstring font_family {};
+struct DrawCommand {
+    DrawCommandType Type {};
+    Rect Bounds {};
+    Rect Clip {};
+    Vec2 Start {};
+    Vec2 End {};
+    Color Tint {};
+    float Thickness {1.0F};
+    float AntiAliasing {1.0F};
+    float FontSize {16.0F};
+    std::string Text {};
+    std::wstring FontFamily {};
 };
 
-struct draw_data {
-    std::vector<draw_command> commands {};
+struct DrawData {
+    std::vector<DrawCommand> Commands {};
 };
 
 }

@@ -18,45 +18,45 @@
 
 namespace farcal {
 
-struct window_desc {
-    std::wstring title {L"Farcal"};
-    int width {1280};
-    int height {720};
+struct WindowDesc {
+    std::wstring Title {L"Farcal"};
+    int Width {1280};
+    int Height {720};
 };
 
-using wnd_proc_hook = std::function<std::optional<LRESULT>(HWND, UINT, WPARAM, LPARAM)>;
+using WndProcHook = std::function<std::optional<LRESULT>(HWND, UINT, WPARAM, LPARAM)>;
 
-class window {
+class Window {
 public:
-    explicit window(const window_desc& desc = {});
-    window(const window&) = delete;
-    window& operator=(const window&) = delete;
-    window(window&& other) noexcept;
-    window& operator=(window&& other) noexcept;
-    ~window();
+    explicit Window(const WindowDesc& desc = {});
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
+    Window(Window&& other) noexcept;
+    Window& operator=(Window&& other) noexcept;
+    ~Window();
 
-    bool poll_events();
-    void cancel_next_poll();
-    input_state consume_input();
-    void set_wnd_proc_hook(wnd_proc_hook hook);
-    HWND native_handle() const;
-    int width() const;
-    int height() const;
-    bool close_requested() const;
+    bool PollEvents();
+    void CancelNextPoll();
+    InputState ConsumeInput();
+    void SetWndProcHook(WndProcHook hook);
+    HWND NativeHandle() const;
+    int Width() const;
+    int Height() const;
+    bool CloseRequested() const;
 
-    static LRESULT CALLBACK wnd_proc(HWND handle, UINT message, WPARAM wparam, LPARAM lparam);
+    static LRESULT CALLBACK WndProc(HWND handle, UINT message, WPARAM wparam, LPARAM lparam);
 
 private:
-    HWND handle_ {};
-    int width_ {};
-    int height_ {};
-    bool close_requested_ {};
-    bool cancel_next_poll_ {};
-    input_state input_ {};
-    wnd_proc_hook hook_ {};
+    HWND Handle_ {};
+    int Width_ {};
+    int Height_ {};
+    bool CloseRequested_ {};
+    bool CancelNextPoll_ {};
+    InputState Input_ {};
+    WndProcHook Hook_ {};
 
-    LRESULT handle_message(UINT message, WPARAM wparam, LPARAM lparam);
-    void release();
+    LRESULT HandleMessage(UINT message, WPARAM wparam, LPARAM lparam);
+    void Release();
 };
 
 }

@@ -13,44 +13,44 @@
 
 namespace farcal {
 
-struct context_config {
+struct ContextConfig {
 };
 
-struct statistics {
-    double delta_seconds {};
-    double frame_seconds {};
-    double frames_per_second {};
-    std::uint64_t frame_index {};
-    std::size_t draw_command_count {};
-    std::size_t background_command_count {};
-    std::size_t main_command_count {};
-    std::size_t foreground_command_count {};
-    std::size_t memory_working_set {};
-    std::size_t memory_private {};
+struct Statistics {
+    double DeltaSeconds {};
+    double FrameSeconds {};
+    double FramesPerSecond {};
+    std::uint64_t FrameIndex {};
+    std::size_t DrawCommandCount {};
+    std::size_t BackgroundCommandCount {};
+    std::size_t MainCommandCount {};
+    std::size_t ForegroundCommandCount {};
+    std::size_t MemoryWorkingSet {};
+    std::size_t MemoryPrivate {};
 };
 
-void create_context(const context_config& config = {});
-void destroy_context();
-bool has_context();
-void begin_frame(const input_state& input = {});
-void end_frame();
-void set_max_fps(float value);
-float max_fps();
-void limit_frame_rate();
-const input_state& input();
-const draw_data& draw();
-const statistics& stats();
-draw_data& background_renderer();
-draw_data& foreground_renderer();
-draw_data& main_renderer();
-void push_id(std::string_view value);
-void push_id(const void* value);
-void pop_id();
-std::uint64_t current_id(std::string_view value);
-std::uint64_t frame_index();
+void CreateContext(const ContextConfig& config = {});
+void DestroyContext();
+bool HasContext();
+void BeginFrame(const InputState& Input = {});
+void EndFrame();
+void SetMaxFps(float value);
+float MaxFps();
+void LimitFrameRate();
+const InputState& Input();
+const DrawData& Draw();
+const Statistics& Stats();
+DrawData& BackgroundRenderer();
+DrawData& ForegroundRenderer();
+DrawData& MainRenderer();
+void PushId(std::string_view value);
+void PushId(const void* value);
+void PopId();
+std::uint64_t CurrentId(std::string_view value);
+std::uint64_t FrameIndex();
 
 template <std::invocable Callback>
-void frame(Callback&& callback)
+void Frame(Callback&& callback)
 {
     callback();
 }

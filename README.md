@@ -2,7 +2,7 @@
 
 Farcal is an early-stage C++20 UI framework project.
 
-The repository currently contains the framework core, a Win32 window layer, a DirectX 11 backend, and a DX11 smoke test that exercises the first immediate-mode API.
+The repository currently contains the framework core, a Win32 window layer, DirectX 10 and DirectX 11 backends, and smoke tests that exercise the immediate-mode API.
 
 This project is not production-ready yet. The public framework API is intentionally small while the core rendering and UI layers are being built.
 
@@ -10,21 +10,21 @@ This project is not production-ready yet. The public framework API is intentiona
 
 - C++20 static library target: `farcal::framework`
 - Public include root: `framework/include`
-- Immediate-mode frame API: `farcal::frame(...)`
-- Basic widgets: `farcal::text(...)`, `farcal::button(...)`
-- Text hierarchy: `farcal::title_text(...)`, `farcal::section_text(...)`, `farcal::text_secondary(...)`
-- Primary actions: `farcal::primary_button(...)`
-- ImGui-style UI windows: `farcal::window_panel(...)`
-- Style stack: `farcal::push_style_color(...)`, `farcal::push_style_var(...)`
-- Draw layers: `farcal::background_renderer()`, `farcal::main_renderer()`, `farcal::foreground_renderer()`
-- ID stack: `farcal::push_id(...)`, `farcal::pop_id()`, `farcal::current_id(...)`
+- Immediate-mode frame API: `farcal::Frame(...)`
+- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`
+- Text hierarchy: `farcal::TitleText(...)`, `farcal::SectionText(...)`, `farcal::TextSecondary(...)`
+- Primary actions: `farcal::PrimaryButton(...)`
+- ImGui-style UI windows: `farcal::WindowPanel(...)`
+- Style stack: `farcal::PushStyleColor(...)`, `farcal::PushStyleVar(...)`
+- Draw layers: `farcal::BackgroundRenderer()`, `farcal::MainRenderer()`, `farcal::ForegroundRenderer()`
+- ID stack: `farcal::PushId(...)`, `farcal::PopId()`, `farcal::CurrentId(...)`
 - Win32 window wrapper with WndProc hook support
 - Draggable UI panels
 - Mouse-wheel scrolling inside UI panels
 - Clipped draw commands for scrollable content
-- DX11 backend with dynamic indexed buffers, scissor batches, resize handling, and cached DirectWrite text formats
+- DX10 and DX11 backends with dynamic indexed buffers, scissor batches, resize handling, and cached DirectWrite text formats
 - CMake-based build with Ninja presets
-- Windows DX11 smoke test executable: `dx11-window-test`
+- Windows smoke test executables: `dx10-window-test`, `dx11-window-test`
 
 ## Repository layout
 
@@ -40,6 +40,9 @@ This project is not production-ready yet. The public framework API is intentiona
 |   `-- src/win32/
 `-- tests/
     |-- CMakeLists.txt
+    |-- dx10-window-test/
+    |   |-- CMakeLists.txt
+    |   `-- main.cpp
     `-- dx11-window-test/
         |-- CMakeLists.txt
         `-- main.cpp
@@ -51,9 +54,9 @@ This project is not production-ready yet. The public framework API is intentiona
 - A C++20 compiler
 - Ninja, when using the provided presets
 - Windows SDK
-- DirectX 11 system libraries (`d3d11`, `dxgi`, `dxguid`)
+- DirectX 10 and 11 system libraries (`d3d10_1`, `d3d11`, `dxgi`, `dxguid`)
 
-The included DX11 test is Windows-only.
+The included DirectX tests are Windows-only.
 
 ## Building
 
@@ -84,21 +87,23 @@ bin/ninja/debug/
 bin/ninja/release/
 ```
 
-## Running the DX11 smoke test
+## Running the smoke tests
 
 After a debug build:
 
 ```sh
 bin/ninja/debug/dx11-window-test.exe
+bin/ninja/debug/dx10-window-test.exe
 ```
 
 After a release build:
 
 ```sh
 bin/ninja/release/dx11-window-test.exe
+bin/ninja/release/dx10-window-test.exe
 ```
 
-The test opens a 1280x720 Win32 window and clears it with a DirectX 11 render target. It is useful as a quick check that the framework target links correctly and that the local Windows/DX11 toolchain is working.
+Each test opens a 1280x720 Win32 window and renders the same immediate-mode UI through one backend. They are useful as quick checks that the framework target links correctly and that the local Windows/DirectX toolchain is working.
 
 ## Using the library from CMake
 
@@ -118,61 +123,61 @@ Then include the public header:
 ```cpp
 #include <framework/framework.hpp>
 
-const char* version = farcal::version();
+const char* Version = farcal::Version();
 ```
 
 ## Basic API shape
 
 ```cpp
-farcal::create_context();
+farcal::CreateContext();
 
-farcal::window window({
-    .title = L"Farcal",
-    .width = 1280,
-    .height = 720,
+farcal::Window Window({
+    .Title = L"Farcal",
+    .Width = 1280,
+    .Height = 720,
 });
 
-farcal::dx11_renderer renderer(window);
+farcal::Dx11Renderer Renderer(Window);
 
-while (window.poll_events()) {
-    farcal::begin_frame(window.consume_input());
+while (Window.PollEvents()) {
+    farcal::BeginFrame(Window.ConsumeInput());
 
-    farcal::background_renderer().commands.push_back({
-        .type = farcal::draw_command_type::filled_rect,
-        .bounds = {{0.0F, 0.0F}, {1280.0F, 720.0F}},
-        .tint = {0.055F, 0.055F, 0.064F, 1.0F},
+    farcal::BackgroundRenderer().Commands.push_back({
+        .Type = farcal::DrawCommandType::FilledRect,
+        .Bounds = {{0.0F, 0.0F}, {1280.0F, 720.0F}},
+        .Tint = {0.055F, 0.055F, 0.064F, 1.0F},
     });
 
-    farcal::frame([&] {
-        farcal::window_panel("Farcal", [&] {
-            farcal::title_text("Viewport Tools");
-            farcal::text_secondary("Immediate-mode controls for engine tooling.");
-            farcal::separator();
+    farcal::Frame([&] {
+        farcal::WindowPanel("Farcal", [&] {
+            farcal::TitleText("Viewport Tools");
+            farcal::TextSecondary("Immediate-mode controls for engine tooling.");
+            farcal::Separator();
 
-            farcal::section_text("Scene");
-            farcal::primary_button("Select Entity", [&] {
-                window.cancel_next_poll();
+            farcal::SectionText("Scene");
+            farcal::PrimaryButton("Select Entity", [&] {
+                Window.CancelNextPoll();
             });
         });
     });
 
-    farcal::end_frame();
-    renderer.render(farcal::draw());
-    renderer.present();
+    farcal::EndFrame();
+    Renderer.Render(farcal::Draw());
+    Renderer.Present();
 }
 
-farcal::destroy_context();
+farcal::DestroyContext();
 ```
 
 The Win32 wrapper also supports a message hook:
 
 ```cpp
-window.set_wnd_proc_hook([](HWND handle, UINT message, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> {
+Window.SetWndProcHook([](HWND handle, UINT message, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> {
     return std::nullopt;
 });
 ```
 
-Calling `window.cancel_next_poll()` makes the next `window.poll_events()` return `false`, which lets app code break out of a `while (window.poll_events())` loop from inside a widget callback.
+Calling `Window.CancelNextPoll()` makes the next `Window.PollEvents()` return `false`, which lets app code break out of a `while (Window.PollEvents())` loop from inside a widget callback.
 
 The default text face is Inter through DirectWrite. If Inter is not installed on the system, DirectWrite will choose its normal fallback for that family.
 
@@ -191,6 +196,6 @@ The next useful milestones are:
 
 - Add a framework-owned font atlas for non-DirectWrite backends.
 - Add layout helpers.
-- Add checkbox and slider widgets.
-- Add resize handling in the DX11 backend.
+- Add more core widgets.
+- Add backend parity checks.
 - Add focused tests or examples for each public feature as it lands.

@@ -16,46 +16,46 @@ namespace farcal {
 namespace {
 
 struct layout_state {
-    vec2 cursor {24.0F, 24.0F};
-    float start_x {24.0F};
-    float content_width {};
-    rect clip {};
-    bool has_clip {};
-    rect last_item {};
-    bool has_last_item {};
-    float line_bottom {};
-    float next_item_width {};
-    float indent_width {};
+    Vec2 Cursor {24.0F, 24.0F};
+    float StartX {24.0F};
+    float ContentWidth {};
+    Rect Clip {};
+    bool HasClip {};
+    Rect LastItem {};
+    bool HasLastItem {};
+    float LineBottom {};
+    float NextItemWidth {};
+    float IndentWidth {};
 };
 
 struct window_state {
-    vec2 position {};
-    vec2 drag_offset {};
-    float content_height {};
-    float scroll_y {};
-    bool initialized {};
-    bool dragging {};
+    Vec2 Position {};
+    Vec2 DragOffset {};
+    float ContentHeight {};
+    float ScrollY {};
+    bool Initialized {};
+    bool Dragging {};
 };
 
 struct window_layout_state {
-    std::string title {};
-    float content_start_y {};
-    float content_padding_y {};
-    float visible_height {};
-    float max_scroll {};
-    bool hovered {};
-    rect scroll_track {};
+    std::string Title {};
+    float ContentStartY {};
+    float ContentPaddingY {};
+    float VisibleHeight {};
+    float MaxScroll {};
+    bool Hovered {};
+    Rect ScrollTrack {};
 };
 
 struct group_state {
-    layout_state parent {};
+    layout_state Parent {};
 };
 
 struct item_result {
-    bool hovered {};
-    bool active {};
-    bool focused {};
-    bool clicked {};
+    bool Hovered {};
+    bool Active {};
+    bool Focused {};
+    bool Clicked {};
 };
 
 layout_state layout;
@@ -66,14 +66,14 @@ std::unordered_map<std::string, window_state> windows;
 std::uint64_t layout_frame = static_cast<std::uint64_t>(-1);
 std::uint64_t active_item {};
 std::uint64_t focused_item {};
-std::uint64_t last_item {};
+std::uint64_t LastItem {};
 bool last_hovered {};
 bool last_active {};
 bool last_focused {};
 
 void ensure_layout()
 {
-    if (layout_frame == frame_index()) {
+    if (layout_frame == FrameIndex()) {
         return;
     }
 
@@ -81,129 +81,129 @@ void ensure_layout()
     layout_stack.clear();
     window_stack.clear();
     group_stack.clear();
-    last_item = 0;
+    LastItem = 0;
     last_hovered = false;
     last_active = false;
     last_focused = false;
-    layout_frame = frame_index();
+    layout_frame = FrameIndex();
 }
 
-draw_data& mutable_draw()
+DrawData& mutable_draw()
 {
-    return main_renderer();
+    return MainRenderer();
 }
 
-bool contains(rect bounds, vec2 point)
+bool contains(Rect bounds, Vec2 point)
 {
-    return point.x >= bounds.min.x && point.y >= bounds.min.y && point.x <= bounds.max.x && point.y <= bounds.max.y;
+    return point.X >= bounds.Min.X && point.Y >= bounds.Min.Y && point.X <= bounds.Max.X && point.Y <= bounds.Max.Y;
 }
 
-rect intersect(rect a, rect b)
+Rect intersect(Rect a, Rect b)
 {
     return {
-        {std::max(a.min.x, b.min.x), std::max(a.min.y, b.min.y)},
-        {std::min(a.max.x, b.max.x), std::min(a.max.y, b.max.y)},
+        {std::max(a.Min.X, b.Min.X), std::max(a.Min.Y, b.Min.Y)},
+        {std::min(a.Max.X, b.Max.X), std::min(a.Max.Y, b.Max.Y)},
     };
 }
 
-rect active_clip(rect bounds)
+Rect active_clip(Rect bounds)
 {
-    if (!layout.has_clip) {
+    if (!layout.HasClip) {
         return bounds;
     }
 
-    return intersect(bounds, layout.clip);
+    return intersect(bounds, layout.Clip);
 }
 
-rect command_clip(rect bounds)
+Rect command_clip(Rect bounds)
 {
-    if (!layout.has_clip) {
+    if (!layout.HasClip) {
         return bounds;
     }
 
-    return layout.clip;
+    return layout.Clip;
 }
 
 float text_width(std::string_view value)
 {
-    const style& theme = current_style();
-    return std::max(24.0F, static_cast<float>(value.size()) * theme.font_size * theme.frame_scale * 0.54F);
+    const Style& theme = CurrentStyle();
+    return std::max(24.0F, static_cast<float>(value.size()) * theme.FontSize * theme.FrameScale * 0.54F);
 }
 
 float text_bounds_width(std::string_view value)
 {
-    if (layout.content_width > 0.0F) {
-        return layout.content_width;
+    if (layout.ContentWidth > 0.0F) {
+        return layout.ContentWidth;
     }
 
     return text_width(value);
 }
 
-rect next_rect(float width, float height)
+Rect next_rect(float Width, float Height)
 {
-    if (layout.next_item_width > 0.0F) {
-        width = layout.next_item_width;
-        layout.next_item_width = 0.0F;
+    if (layout.NextItemWidth > 0.0F) {
+        Width = layout.NextItemWidth;
+        layout.NextItemWidth = 0.0F;
     }
 
-    const float spacing = current_style().item_spacing_y * current_style().frame_scale;
-    rect bounds {
-        layout.cursor,
-        {layout.cursor.x + width, layout.cursor.y + height},
+    const float Spacing = CurrentStyle().ItemSpacingY * CurrentStyle().FrameScale;
+    Rect bounds {
+        layout.Cursor,
+        {layout.Cursor.X + Width, layout.Cursor.Y + Height},
     };
-    const float bottom = std::max(layout.line_bottom, bounds.max.y);
-    layout.cursor = {layout.start_x + layout.indent_width, bottom + spacing};
-    layout.line_bottom = bottom;
-    layout.last_item = bounds;
-    layout.has_last_item = true;
+    const float bottom = std::max(layout.LineBottom, bounds.Max.Y);
+    layout.Cursor = {layout.StartX + layout.IndentWidth, bottom + Spacing};
+    layout.LineBottom = bottom;
+    layout.LastItem = bounds;
+    layout.HasLastItem = true;
     return bounds;
 }
 
-void advance_layout(float height)
+void advance_layout(float Height)
 {
-    const float spacing = current_style().item_spacing_y * current_style().frame_scale;
-    layout.cursor.y += height + spacing;
-    layout.line_bottom = layout.cursor.y - spacing;
+    const float Spacing = CurrentStyle().ItemSpacingY * CurrentStyle().FrameScale;
+    layout.Cursor.Y += Height + Spacing;
+    layout.LineBottom = layout.Cursor.Y - Spacing;
 }
 
-void set_last_item(std::uint64_t id, bool hovered, bool active, bool focused)
+void set_last_item(std::uint64_t id, bool Hovered, bool Active, bool Focused)
 {
-    last_item = id;
-    last_hovered = hovered;
-    last_active = active;
-    last_focused = focused;
+    LastItem = id;
+    last_hovered = Hovered;
+    last_active = Active;
+    last_focused = Focused;
 }
 
-item_result item_behavior(std::uint64_t id, rect bounds)
+item_result item_behavior(std::uint64_t id, Rect bounds)
 {
-    const input_state& io = input();
-    if (!io.mouse_down[0] && !io.mouse_pressed[0]) {
+    const InputState& io = Input();
+    if (!io.MouseDown[0] && !io.MousePressed[0]) {
         active_item = 0;
     }
 
-    const bool hovered = contains(active_clip(bounds), io.mouse_position);
-    if (hovered && io.mouse_pressed[0]) {
+    const bool Hovered = contains(active_clip(bounds), io.MousePosition);
+    if (Hovered && io.MousePressed[0]) {
         active_item = id;
         focused_item = id;
     }
 
-    const bool active = active_item == id;
-    const bool focused = focused_item == id;
-    const bool clicked = hovered && io.mouse_pressed[0];
-    set_last_item(id, hovered, active, focused);
+    const bool Active = active_item == id;
+    const bool Focused = focused_item == id;
+    const bool Clicked = Hovered && io.MousePressed[0];
+    set_last_item(id, Hovered, Active, Focused);
 
     return {
-        .hovered = hovered,
-        .active = active,
-        .focused = focused,
-        .clicked = clicked,
+        .Hovered = Hovered,
+        .Active = Active,
+        .Focused = Focused,
+        .Clicked = Clicked,
     };
 }
 
 bool keyboard_toggle(std::uint64_t id)
 {
-    const input_state& io = input();
-    return focused_item == id && (io.key_pressed[13] || io.key_pressed[32]);
+    const InputState& io = Input();
+    return focused_item == id && (io.KeyPressed[13] || io.KeyPressed[32]);
 }
 
 float normalized_value(float value, float minimum, float maximum)
@@ -231,89 +231,89 @@ bool set_float_value(float* target, float value, float minimum, float maximum)
     return true;
 }
 
-void add_text(rect bounds, std::string_view value, color tint)
+void add_text(Rect bounds, std::string_view value, Color tint)
 {
-    const style& theme = current_style();
-    mutable_draw().commands.push_back({
-        .type = draw_command_type::text,
-        .bounds = bounds,
-        .clip = command_clip(bounds),
-        .tint = tint,
-        .font_size = theme.font_size * theme.frame_scale,
-        .text = std::string(value),
-        .font_family = theme.font_family,
+    const Style& theme = CurrentStyle();
+    mutable_draw().Commands.push_back({
+        .Type = DrawCommandType::Text,
+        .Bounds = bounds,
+        .Clip = command_clip(bounds),
+        .Tint = tint,
+        .FontSize = theme.FontSize * theme.FrameScale,
+        .Text = std::string(value),
+        .FontFamily = theme.FontFamily,
     });
 }
 
-void add_filled_rect(rect bounds, color tint)
+void add_filled_rect(Rect bounds, Color tint)
 {
-    mutable_draw().commands.push_back({
-        .type = draw_command_type::filled_rect,
-        .bounds = bounds,
-        .clip = command_clip(bounds),
-        .tint = tint,
-        .anti_aliasing = current_style().anti_aliasing,
+    mutable_draw().Commands.push_back({
+        .Type = DrawCommandType::FilledRect,
+        .Bounds = bounds,
+        .Clip = command_clip(bounds),
+        .Tint = tint,
+        .AntiAliasing = CurrentStyle().AntiAliasing,
     });
 }
 
-void add_rect(rect bounds, color tint, float thickness = 1.0F)
+void add_rect(Rect bounds, Color tint, float thickness = 1.0F)
 {
-    mutable_draw().commands.push_back({
-        .type = draw_command_type::rect,
-        .bounds = bounds,
-        .clip = command_clip(bounds),
-        .tint = tint,
-        .thickness = thickness,
-        .anti_aliasing = current_style().anti_aliasing,
+    mutable_draw().Commands.push_back({
+        .Type = DrawCommandType::Rect,
+        .Bounds = bounds,
+        .Clip = command_clip(bounds),
+        .Tint = tint,
+        .Thickness = thickness,
+        .AntiAliasing = CurrentStyle().AntiAliasing,
     });
 }
 
-void add_line(vec2 start, vec2 end, color tint, float thickness)
+void add_line(Vec2 start, Vec2 end, Color tint, float thickness)
 {
-    const rect bounds {
-        {std::min(start.x, end.x), std::min(start.y, end.y)},
-        {std::max(start.x, end.x), std::max(start.y, end.y)},
+    const Rect bounds {
+        {std::min(start.X, end.X), std::min(start.Y, end.Y)},
+        {std::max(start.X, end.X), std::max(start.Y, end.Y)},
     };
 
-    mutable_draw().commands.push_back({
-        .type = draw_command_type::line,
-        .clip = command_clip(bounds),
-        .start = start,
-        .end = end,
-        .tint = tint,
-        .thickness = thickness,
-        .anti_aliasing = current_style().anti_aliasing,
+    mutable_draw().Commands.push_back({
+        .Type = DrawCommandType::Line,
+        .Clip = command_clip(bounds),
+        .Start = start,
+        .End = end,
+        .Tint = tint,
+        .Thickness = thickness,
+        .AntiAliasing = CurrentStyle().AntiAliasing,
     });
 }
 
-void add_hline(float x0, float x1, float y, color tint)
+void add_hline(float x0, float x1, float y, Color tint)
 {
     add_line({x0, y + 0.5F}, {x1, y + 0.5F}, tint, 1.0F);
 }
 
-void add_vline(float x, float y0, float y1, color tint)
+void add_vline(float x, float y0, float y1, Color tint)
 {
     add_line({x + 0.5F, y0}, {x + 0.5F, y1}, tint, 1.0F);
 }
 
-void add_soft_rect(rect bounds, float radius, color tint)
+void add_soft_rect(Rect bounds, float radius, Color tint)
 {
-    add_filled_rect({{bounds.min.x + radius, bounds.min.y}, {bounds.max.x - radius, bounds.max.y}}, tint);
-    add_filled_rect({{bounds.min.x, bounds.min.y + radius}, {bounds.max.x, bounds.max.y - radius}}, tint);
-    add_filled_rect({{bounds.min.x + 1.0F, bounds.min.y + 1.0F}, {bounds.min.x + radius, bounds.min.y + radius}}, tint);
-    add_filled_rect({{bounds.max.x - radius, bounds.min.y + 1.0F}, {bounds.max.x - 1.0F, bounds.min.y + radius}}, tint);
-    add_filled_rect({{bounds.min.x + 1.0F, bounds.max.y - radius}, {bounds.min.x + radius, bounds.max.y - 1.0F}}, tint);
-    add_filled_rect({{bounds.max.x - radius, bounds.max.y - radius}, {bounds.max.x - 1.0F, bounds.max.y - 1.0F}}, tint);
+    add_filled_rect({{bounds.Min.X + radius, bounds.Min.Y}, {bounds.Max.X - radius, bounds.Max.Y}}, tint);
+    add_filled_rect({{bounds.Min.X, bounds.Min.Y + radius}, {bounds.Max.X, bounds.Max.Y - radius}}, tint);
+    add_filled_rect({{bounds.Min.X + 1.0F, bounds.Min.Y + 1.0F}, {bounds.Min.X + radius, bounds.Min.Y + radius}}, tint);
+    add_filled_rect({{bounds.Max.X - radius, bounds.Min.Y + 1.0F}, {bounds.Max.X - 1.0F, bounds.Min.Y + radius}}, tint);
+    add_filled_rect({{bounds.Min.X + 1.0F, bounds.Max.Y - radius}, {bounds.Min.X + radius, bounds.Max.Y - 1.0F}}, tint);
+    add_filled_rect({{bounds.Max.X - radius, bounds.Max.Y - radius}, {bounds.Max.X - 1.0F, bounds.Max.Y - 1.0F}}, tint);
 }
 
-void add_soft_outline(rect bounds, float radius, color tint)
+void add_soft_outline(Rect bounds, float radius, Color tint)
 {
     (void)radius;
 
-    const float left = bounds.min.x + 0.5F;
-    const float top = bounds.min.y + 0.5F;
-    const float right = bounds.max.x - 0.5F;
-    const float bottom = bounds.max.y - 0.5F;
+    const float left = bounds.Min.X + 0.5F;
+    const float top = bounds.Min.Y + 0.5F;
+    const float right = bounds.Max.X - 0.5F;
+    const float bottom = bounds.Max.Y - 0.5F;
 
     add_line({left, top}, {right, top}, tint, 1.0F);
     add_line({right, top}, {right, bottom}, tint, 1.0F);
@@ -321,243 +321,243 @@ void add_soft_outline(rect bounds, float radius, color tint)
     add_line({left, bottom}, {left, top}, tint, 1.0F);
 }
 
-bool button_impl(std::string_view label, color normal, color hovered_color, color active_color, color text_color)
+bool button_impl(std::string_view label, Color normal, Color hovered_color, Color active_color, Color text_color)
 {
     ensure_layout();
-    const style& theme = current_style();
-    const float scale = theme.frame_scale;
-    const float height = 30.0F * scale;
-    const float width = layout.content_width > 0.0F ? std::min(theme.item_width * scale, layout.content_width) : theme.item_width * scale;
-    const rect bounds = next_rect(width, height);
-    const item_result item = item_behavior(current_id(label), bounds);
-    const color fill = item.active ? active_color : item.hovered ? hovered_color : normal;
-    const color top_edge = item.hovered ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.28F} : color {1.0F, 1.0F, 1.0F, 0.025F};
+    const Style& theme = CurrentStyle();
+    const float scale = theme.FrameScale;
+    const float Height = 30.0F * scale;
+    const float Width = layout.ContentWidth > 0.0F ? std::min(theme.ItemWidth * scale, layout.ContentWidth) : theme.ItemWidth * scale;
+    const Rect bounds = next_rect(Width, Height);
+    const item_result item = item_behavior(CurrentId(label), bounds);
+    const Color fill = item.Active ? active_color : item.Hovered ? hovered_color : normal;
+    const Color top_edge = item.Hovered ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.28F} : Color {1.0F, 1.0F, 1.0F, 0.025F};
 
     add_soft_rect(bounds, 4.0F * scale, fill);
-    add_hline(bounds.min.x + 4.0F * scale, bounds.max.x - 4.0F * scale, bounds.min.y + 1.0F, top_edge);
-    add_soft_outline(bounds, 4.0F * scale, item.focused ? theme.accent : item.hovered ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.36F} : theme.button_border);
-    add_text({{bounds.min.x + theme.frame_padding_x * scale, bounds.min.y + 6.0F * scale}, bounds.max}, label, text_color);
+    add_hline(bounds.Min.X + 4.0F * scale, bounds.Max.X - 4.0F * scale, bounds.Min.Y + 1.0F, top_edge);
+    add_soft_outline(bounds, 4.0F * scale, item.Focused ? theme.Accent : item.Hovered ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.36F} : theme.ButtonBorder);
+    add_text({{bounds.Min.X + theme.FramePaddingX * scale, bounds.Min.Y + 6.0F * scale}, bounds.Max}, label, text_color);
 
-    return item.clicked;
+    return item.Clicked;
 }
 
 }
 
-void text(std::string_view value)
+void Text(std::string_view value)
 {
     ensure_layout();
-    const style& theme = current_style();
-    const float height = theme.font_size * theme.frame_scale * 1.45F;
-    const rect bounds = next_rect(text_bounds_width(value), height);
-    add_text(bounds, value, theme.text);
-    set_last_item(current_id(value), contains(active_clip(bounds), input().mouse_position), false, focused_item == current_id(value));
+    const Style& theme = CurrentStyle();
+    const float Height = theme.FontSize * theme.FrameScale * 1.45F;
+    const Rect bounds = next_rect(text_bounds_width(value), Height);
+    add_text(bounds, value, theme.Text);
+    set_last_item(CurrentId(value), contains(active_clip(bounds), Input().MousePosition), false, focused_item == CurrentId(value));
 }
 
-void text_secondary(std::string_view value)
+void TextSecondary(std::string_view value)
 {
     ensure_layout();
-    const style& theme = current_style();
-    const float height = theme.font_size * theme.frame_scale * 1.45F;
-    const rect bounds = next_rect(text_bounds_width(value), height);
-    add_text(bounds, value, theme.text_secondary);
-    set_last_item(current_id(value), contains(active_clip(bounds), input().mouse_position), false, focused_item == current_id(value));
+    const Style& theme = CurrentStyle();
+    const float Height = theme.FontSize * theme.FrameScale * 1.45F;
+    const Rect bounds = next_rect(text_bounds_width(value), Height);
+    add_text(bounds, value, theme.TextSecondary);
+    set_last_item(CurrentId(value), contains(active_clip(bounds), Input().MousePosition), false, focused_item == CurrentId(value));
 }
 
-void title_text(std::string_view value)
+void TitleText(std::string_view value)
 {
     ensure_layout();
-    const style& theme = current_style();
-    push_style_var(style_var::font_size, 18.0F);
-    const style& title_theme = current_style();
-    const float height = title_theme.font_size * title_theme.frame_scale * 1.35F;
-    const rect bounds = next_rect(text_bounds_width(value), height);
-    add_text(bounds, value, title_theme.text);
-    pop_style_var();
-    set_last_item(current_id(value), contains(active_clip(bounds), input().mouse_position), false, focused_item == current_id(value));
+    const Style& theme = CurrentStyle();
+    PushStyleVar(StyleVar::FontSize, 18.0F);
+    const Style& title_theme = CurrentStyle();
+    const float Height = title_theme.FontSize * title_theme.FrameScale * 1.35F;
+    const Rect bounds = next_rect(text_bounds_width(value), Height);
+    add_text(bounds, value, title_theme.Text);
+    PopStyleVar();
+    set_last_item(CurrentId(value), contains(active_clip(bounds), Input().MousePosition), false, focused_item == CurrentId(value));
 }
 
-void section_text(std::string_view value)
+void SectionText(std::string_view value)
 {
     ensure_layout();
-    const style& theme = current_style();
-    layout.cursor.y += 2.0F * theme.frame_scale;
-    const rect bounds = next_rect(text_width(value), 20.0F * theme.frame_scale);
-    add_text(bounds, value, theme.text_secondary);
-    add_hline(layout.cursor.x, layout.cursor.x + layout.content_width, bounds.max.y, {theme.window_border.r, theme.window_border.g, theme.window_border.b, 0.48F});
-    layout.cursor.y += 2.0F * theme.frame_scale;
-    set_last_item(current_id(value), contains(active_clip(bounds), input().mouse_position), false, focused_item == current_id(value));
+    const Style& theme = CurrentStyle();
+    layout.Cursor.Y += 2.0F * theme.FrameScale;
+    const Rect bounds = next_rect(text_width(value), 20.0F * theme.FrameScale);
+    add_text(bounds, value, theme.TextSecondary);
+    add_hline(layout.Cursor.X, layout.Cursor.X + layout.ContentWidth, bounds.Max.Y, {theme.WindowBorder.R, theme.WindowBorder.G, theme.WindowBorder.B, 0.48F});
+    layout.Cursor.Y += 2.0F * theme.FrameScale;
+    set_last_item(CurrentId(value), contains(active_clip(bounds), Input().MousePosition), false, focused_item == CurrentId(value));
 }
 
-void separator()
+void Separator()
 {
     ensure_layout();
-    const style& theme = current_style();
-    const float width = layout.content_width > 0.0F ? layout.content_width : theme.item_width * theme.frame_scale;
-    add_hline(layout.cursor.x, layout.cursor.x + width, layout.cursor.y + 4.0F * theme.frame_scale, {theme.window_border.r, theme.window_border.g, theme.window_border.b, 0.65F});
-    layout.cursor.y += theme.item_spacing_y * theme.frame_scale;
+    const Style& theme = CurrentStyle();
+    const float Width = layout.ContentWidth > 0.0F ? layout.ContentWidth : theme.ItemWidth * theme.FrameScale;
+    add_hline(layout.Cursor.X, layout.Cursor.X + Width, layout.Cursor.Y + 4.0F * theme.FrameScale, {theme.WindowBorder.R, theme.WindowBorder.G, theme.WindowBorder.B, 0.65F});
+    layout.Cursor.Y += theme.ItemSpacingY * theme.FrameScale;
 }
 
-void spacing()
+void Spacing()
 {
     ensure_layout();
-    layout.cursor.y += current_style().section_spacing_y * current_style().frame_scale;
+    layout.Cursor.Y += CurrentStyle().SectionSpacingY * CurrentStyle().FrameScale;
 }
 
-void same_line(float spacing)
+void SameLine(float Spacing)
 {
     ensure_layout();
-    if (!layout.has_last_item) {
+    if (!layout.HasLastItem) {
         return;
     }
 
-    const style& theme = current_style();
-    const float resolved_spacing = spacing >= 0.0F ? spacing : theme.item_spacing_y * theme.frame_scale;
-    layout.cursor = {layout.last_item.max.x + resolved_spacing, layout.last_item.min.y};
-    layout.line_bottom = layout.last_item.max.y;
+    const Style& theme = CurrentStyle();
+    const float resolved_spacing = Spacing >= 0.0F ? Spacing : theme.ItemSpacingY * theme.FrameScale;
+    layout.Cursor = {layout.LastItem.Max.X + resolved_spacing, layout.LastItem.Min.Y};
+    layout.LineBottom = layout.LastItem.Max.Y;
 }
 
-void begin_group()
+void BeginGroup()
 {
     ensure_layout();
     group_stack.push_back({
-        .parent = layout,
+        .Parent = layout,
     });
-    layout.has_last_item = false;
-    layout.line_bottom = layout.cursor.y;
+    layout.HasLastItem = false;
+    layout.LineBottom = layout.Cursor.Y;
 }
 
-void end_group()
+void EndGroup()
 {
     ensure_layout();
     if (group_stack.empty()) {
-        throw std::logic_error("farcal group stack is empty");
+        throw std::logic_error("farcal Group stack is empty");
     }
 
     const layout_state group_layout = layout;
-    layout = group_stack.back().parent;
+    layout = group_stack.back().Parent;
     group_stack.pop_back();
 
-    const rect bounds {
-        layout.cursor,
+    const Rect bounds {
+        layout.Cursor,
         {
-            layout.content_width > 0.0F ? layout.cursor.x + layout.content_width : std::max(layout.cursor.x, group_layout.last_item.max.x),
-            std::max(layout.cursor.y, group_layout.line_bottom),
+            layout.ContentWidth > 0.0F ? layout.Cursor.X + layout.ContentWidth : std::max(layout.Cursor.X, group_layout.LastItem.Max.X),
+            std::max(layout.Cursor.Y, group_layout.LineBottom),
         },
     };
 
-    layout.cursor.y = bounds.max.y + current_style().item_spacing_y * current_style().frame_scale;
-    layout.line_bottom = bounds.max.y;
-    layout.last_item = bounds;
-    layout.has_last_item = true;
-    set_last_item(current_id("group"), contains(active_clip(bounds), input().mouse_position), false, focused_item == current_id("group"));
+    layout.Cursor.Y = bounds.Max.Y + CurrentStyle().ItemSpacingY * CurrentStyle().FrameScale;
+    layout.LineBottom = bounds.Max.Y;
+    layout.LastItem = bounds;
+    layout.HasLastItem = true;
+    set_last_item(CurrentId("Group"), contains(active_clip(bounds), Input().MousePosition), false, focused_item == CurrentId("Group"));
 }
 
-void indent(float width)
+void Indent(float Width)
 {
     ensure_layout();
-    const float resolved_width = width > 0.0F ? width : 18.0F * current_style().frame_scale;
-    layout.indent_width += resolved_width;
-    layout.cursor.x = layout.start_x + layout.indent_width;
+    const float resolved_width = Width > 0.0F ? Width : 18.0F * CurrentStyle().FrameScale;
+    layout.IndentWidth += resolved_width;
+    layout.Cursor.X = layout.StartX + layout.IndentWidth;
 }
 
-void unindent(float width)
+void Unindent(float Width)
 {
     ensure_layout();
-    const float resolved_width = width > 0.0F ? width : 18.0F * current_style().frame_scale;
-    layout.indent_width = std::max(0.0F, layout.indent_width - resolved_width);
-    layout.cursor.x = layout.start_x + layout.indent_width;
+    const float resolved_width = Width > 0.0F ? Width : 18.0F * CurrentStyle().FrameScale;
+    layout.IndentWidth = std::max(0.0F, layout.IndentWidth - resolved_width);
+    layout.Cursor.X = layout.StartX + layout.IndentWidth;
 }
 
-void dummy(vec2 size)
+void Dummy(Vec2 size)
 {
     ensure_layout();
-    const rect bounds = next_rect(size.x, size.y);
-    set_last_item(current_id("dummy"), contains(active_clip(bounds), input().mouse_position), false, focused_item == current_id("dummy"));
+    const Rect bounds = next_rect(size.X, size.Y);
+    set_last_item(CurrentId("Dummy"), contains(active_clip(bounds), Input().MousePosition), false, focused_item == CurrentId("Dummy"));
 }
 
-void set_next_item_width(float width)
+void SetNextItemWidth(float Width)
 {
     ensure_layout();
-    layout.next_item_width = std::max(0.0F, width);
+    layout.NextItemWidth = std::max(0.0F, Width);
 }
 
-bool is_item_hovered()
+bool IsItemHovered()
 {
     ensure_layout();
     return last_hovered;
 }
 
-bool is_item_active()
+bool IsItemActive()
 {
     ensure_layout();
     return last_active;
 }
 
-bool is_item_focused()
+bool IsItemFocused()
 {
     ensure_layout();
     return last_focused;
 }
 
-bool button(std::string_view label)
+bool Button(std::string_view label)
 {
-    const style& theme = current_style();
-    return button_impl(label, theme.button, theme.button_hovered, theme.button_active, theme.text);
+    const Style& theme = CurrentStyle();
+    return button_impl(label, theme.Button, theme.ButtonHovered, theme.ButtonActive, theme.Text);
 }
 
-bool primary_button(std::string_view label)
+bool PrimaryButton(std::string_view label)
 {
-    const style& theme = current_style();
-    return button_impl(label, theme.button_primary, theme.button_primary_hovered, theme.button_primary_active, {1.0F, 1.0F, 1.0F, 1.0F});
+    const Style& theme = CurrentStyle();
+    return button_impl(label, theme.ButtonPrimary, theme.ButtonPrimaryHovered, theme.ButtonPrimaryActive, {1.0F, 1.0F, 1.0F, 1.0F});
 }
 
-bool checkbox(std::string_view label, bool* value)
+bool Checkbox(std::string_view label, bool* value)
 {
     ensure_layout();
     if (value == nullptr) {
         return false;
     }
 
-    const style& theme = current_style();
-    const float scale = theme.frame_scale;
-    const float height = 24.0F * scale;
+    const Style& theme = CurrentStyle();
+    const float scale = theme.FrameScale;
+    const float Height = 24.0F * scale;
     const float box_size = 16.0F * scale;
     const float gap = 10.0F * scale;
     const float label_width = text_width(label);
-    const float width = layout.content_width > 0.0F ? layout.content_width : box_size + gap + label_width;
-    const rect bounds = next_rect(width, height);
-    const std::uint64_t id = current_id(label);
+    const float Width = layout.ContentWidth > 0.0F ? layout.ContentWidth : box_size + gap + label_width;
+    const Rect bounds = next_rect(Width, Height);
+    const std::uint64_t id = CurrentId(label);
     const item_result item = item_behavior(id, bounds);
-    const bool changed = item.clicked || keyboard_toggle(id);
+    const bool changed = item.Clicked || keyboard_toggle(id);
 
     if (changed) {
         *value = !*value;
     }
 
-    const float box_y = bounds.min.y + (height - box_size) * 0.5F;
-    const rect box {{bounds.min.x, box_y}, {bounds.min.x + box_size, box_y + box_size}};
-    const color unchecked_fill = item.active ? theme.button_active : item.hovered ? theme.button_hovered : theme.button;
-    const color checked_fill = item.active ? theme.button_primary_active : item.hovered ? theme.button_primary_hovered : theme.button_primary;
-    const color fill = *value ? checked_fill : unchecked_fill;
-    const color border = item.focused ? theme.accent : *value ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.82F} : item.hovered ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.34F} : theme.button_border;
+    const float box_y = bounds.Min.Y + (Height - box_size) * 0.5F;
+    const Rect box {{bounds.Min.X, box_y}, {bounds.Min.X + box_size, box_y + box_size}};
+    const Color unchecked_fill = item.Active ? theme.ButtonActive : item.Hovered ? theme.ButtonHovered : theme.Button;
+    const Color checked_fill = item.Active ? theme.ButtonPrimaryActive : item.Hovered ? theme.ButtonPrimaryHovered : theme.ButtonPrimary;
+    const Color fill = *value ? checked_fill : unchecked_fill;
+    const Color border = item.Focused ? theme.Accent : *value ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.82F} : item.Hovered ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.34F} : theme.ButtonBorder;
 
-    add_filled_rect({{box.min.x + 1.0F, box.min.y + 1.0F}, {box.max.x - 1.0F, box.max.y - 1.0F}}, fill);
-    add_hline(box.min.x + 1.0F, box.max.x - 1.0F, box.min.y + 1.0F, item.hovered ? color {1.0F, 1.0F, 1.0F, 0.12F} : color {1.0F, 1.0F, 1.0F, 0.05F});
+    add_filled_rect({{box.Min.X + 1.0F, box.Min.Y + 1.0F}, {box.Max.X - 1.0F, box.Max.Y - 1.0F}}, fill);
+    add_hline(box.Min.X + 1.0F, box.Max.X - 1.0F, box.Min.Y + 1.0F, item.Hovered ? Color {1.0F, 1.0F, 1.0F, 0.12F} : Color {1.0F, 1.0F, 1.0F, 0.05F});
     add_soft_outline(box, 0.0F, border);
 
     if (*value) {
-        const color mark {1.0F, 1.0F, 1.0F, 0.96F};
-        add_line({box.min.x + 4.4F * scale, box.min.y + 8.3F * scale}, {box.min.x + 7.0F * scale, box.min.y + 10.8F * scale}, mark, 1.35F * scale);
-        add_line({box.min.x + 7.0F * scale, box.min.y + 10.8F * scale}, {box.min.x + 12.0F * scale, box.min.y + 5.7F * scale}, mark, 1.35F * scale);
+        const Color mark {1.0F, 1.0F, 1.0F, 0.96F};
+        add_line({box.Min.X + 4.4F * scale, box.Min.Y + 8.3F * scale}, {box.Min.X + 7.0F * scale, box.Min.Y + 10.8F * scale}, mark, 1.35F * scale);
+        add_line({box.Min.X + 7.0F * scale, box.Min.Y + 10.8F * scale}, {box.Min.X + 12.0F * scale, box.Min.Y + 5.7F * scale}, mark, 1.35F * scale);
     }
 
-    const color text_color = *value ? theme.text : theme.text_secondary;
-    add_text({{box.max.x + gap, bounds.min.y + 2.0F * scale}, bounds.max}, label, text_color);
+    const Color text_color = *value ? theme.Text : theme.TextSecondary;
+    add_text({{box.Max.X + gap, bounds.Min.Y + 2.0F * scale}, bounds.Max}, label, text_color);
 
     return changed;
 }
 
-bool slider_float(std::string_view label, float* value, float minimum, float maximum)
+bool SliderFloat(std::string_view label, float* value, float minimum, float maximum)
 {
     ensure_layout();
     if (value == nullptr) {
@@ -568,183 +568,183 @@ bool slider_float(std::string_view label, float* value, float minimum, float max
         std::swap(minimum, maximum);
     }
 
-    const style& theme = current_style();
-    const input_state& io = input();
-    const float scale = theme.frame_scale;
-    const float height = 42.0F * scale;
-    const float width = layout.content_width > 0.0F ? layout.content_width : theme.item_width * scale;
-    const rect bounds = next_rect(width, height);
-    const std::uint64_t id = current_id(label);
+    const Style& theme = CurrentStyle();
+    const InputState& io = Input();
+    const float scale = theme.FrameScale;
+    const float Height = 42.0F * scale;
+    const float Width = layout.ContentWidth > 0.0F ? layout.ContentWidth : theme.ItemWidth * scale;
+    const Rect bounds = next_rect(Width, Height);
+    const std::uint64_t id = CurrentId(label);
     const item_result item = item_behavior(id, bounds);
     bool changed = false;
 
-    const float track_y = bounds.min.y + 30.0F * scale;
-    const float track_start = bounds.min.x;
-    const float track_end = bounds.max.x;
+    const float track_y = bounds.Min.Y + 30.0F * scale;
+    const float track_start = bounds.Min.X;
+    const float track_end = bounds.Max.X;
     const float track_width = std::max(1.0F, track_end - track_start);
 
-    if ((item.active && io.mouse_down[0]) || item.clicked) {
-        const float normalized = (io.mouse_position.x - track_start) / track_width;
+    if ((item.Active && io.MouseDown[0]) || item.Clicked) {
+        const float normalized = (io.MousePosition.X - track_start) / track_width;
         changed = set_float_value(value, value_from_normalized(normalized, minimum, maximum), minimum, maximum);
     }
 
-    if (item.focused) {
+    if (item.Focused) {
         const float step = (maximum - minimum) / 100.0F;
-        if (io.key_pressed[37]) {
+        if (io.KeyPressed[37]) {
             changed = set_float_value(value, *value - step, minimum, maximum) || changed;
         }
-        if (io.key_pressed[39]) {
+        if (io.KeyPressed[39]) {
             changed = set_float_value(value, *value + step, minimum, maximum) || changed;
         }
     }
 
     const float normalized = normalized_value(*value, minimum, maximum);
     const float thumb_x = track_start + track_width * normalized;
-    const color track_color = item.hovered || item.active ? theme.button_hovered : theme.button;
-    const color progress_color = item.active ? theme.button_primary_active : item.hovered ? theme.button_primary_hovered : theme.button_primary;
-    const color thumb_fill = item.active ? theme.selection : theme.window_panel;
-    const color thumb_border = item.focused ? theme.accent : item.hovered || item.active ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.70F} : theme.button_border;
+    const Color track_color = item.Hovered || item.Active ? theme.ButtonHovered : theme.Button;
+    const Color progress_color = item.Active ? theme.ButtonPrimaryActive : item.Hovered ? theme.ButtonPrimaryHovered : theme.ButtonPrimary;
+    const Color thumb_fill = item.Active ? theme.Selection : theme.WindowPanel;
+    const Color thumb_border = item.Focused ? theme.Accent : item.Hovered || item.Active ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.70F} : theme.ButtonBorder;
 
     char value_text[32] {};
     std::snprintf(value_text, sizeof(value_text), "%.2f", static_cast<double>(*value));
     const float value_width = text_width(value_text);
 
-    add_text({bounds.min, {bounds.max.x - value_width - 10.0F * scale, bounds.min.y + 20.0F * scale}}, label, theme.text_secondary);
-    add_text({{bounds.max.x - value_width, bounds.min.y}, {bounds.max.x, bounds.min.y + 20.0F * scale}}, value_text, item.active ? theme.text : theme.text_secondary);
+    add_text({bounds.Min, {bounds.Max.X - value_width - 10.0F * scale, bounds.Min.Y + 20.0F * scale}}, label, theme.TextSecondary);
+    add_text({{bounds.Max.X - value_width, bounds.Min.Y}, {bounds.Max.X, bounds.Min.Y + 20.0F * scale}}, value_text, item.Active ? theme.Text : theme.TextSecondary);
 
     add_line({track_start, track_y}, {track_end, track_y}, track_color, 4.0F * scale);
     add_line({track_start, track_y}, {thumb_x, track_y}, progress_color, 4.0F * scale);
 
-    const rect thumb {{thumb_x - 4.0F * scale, track_y - 8.0F * scale}, {thumb_x + 4.0F * scale, track_y + 8.0F * scale}};
-    add_filled_rect({{thumb.min.x + 1.0F, thumb.min.y + 1.0F}, {thumb.max.x - 1.0F, thumb.max.y - 1.0F}}, thumb_fill);
+    const Rect thumb {{thumb_x - 4.0F * scale, track_y - 8.0F * scale}, {thumb_x + 4.0F * scale, track_y + 8.0F * scale}};
+    add_filled_rect({{thumb.Min.X + 1.0F, thumb.Min.Y + 1.0F}, {thumb.Max.X - 1.0F, thumb.Max.Y - 1.0F}}, thumb_fill);
     add_soft_outline(thumb, 0.0F, thumb_border);
 
     return changed;
 }
 
-bool begin_window(std::string_view title)
+bool BeginWindow(std::string_view Title)
 {
     ensure_layout();
-    const style& theme = current_style();
-    const float scale = theme.frame_scale;
-    const float width = theme.window_width * scale;
-    const float title_height = theme.window_title_height * scale;
-    window_state& state = windows[std::string(title)];
-    const float height = theme.window_height * scale;
+    const Style& theme = CurrentStyle();
+    const float scale = theme.FrameScale;
+    const float Width = theme.WindowWidth * scale;
+    const float title_height = theme.WindowTitleHeight * scale;
+    window_state& state = windows[std::string(Title)];
+    const float Height = theme.WindowHeight * scale;
 
-    if (!state.initialized) {
-        state.position = layout.cursor;
-        state.initialized = true;
+    if (!state.Initialized) {
+        state.Position = layout.Cursor;
+        state.Initialized = true;
     }
 
-    const input_state& io = input();
-    rect bounds {
-        state.position,
-        {state.position.x + width, state.position.y + height},
+    const InputState& io = Input();
+    Rect bounds {
+        state.Position,
+        {state.Position.X + Width, state.Position.Y + Height},
     };
-    const rect title_bounds {bounds.min, {bounds.max.x, bounds.min.y + title_height}};
-    const bool hovered = contains(bounds, io.mouse_position);
-    const bool title_hovered = contains(title_bounds, io.mouse_position);
+    const Rect title_bounds {bounds.Min, {bounds.Max.X, bounds.Min.Y + title_height}};
+    const bool Hovered = contains(bounds, io.MousePosition);
+    const bool title_hovered = contains(title_bounds, io.MousePosition);
 
-    if (title_hovered && io.mouse_pressed[0]) {
-        state.dragging = true;
-        state.drag_offset = {
-            io.mouse_position.x - state.position.x,
-            io.mouse_position.y - state.position.y,
+    if (title_hovered && io.MousePressed[0]) {
+        state.Dragging = true;
+        state.DragOffset = {
+            io.MousePosition.X - state.Position.X,
+            io.MousePosition.Y - state.Position.Y,
         };
     }
 
-    if (!io.mouse_down[0]) {
-        state.dragging = false;
+    if (!io.MouseDown[0]) {
+        state.Dragging = false;
     }
 
-    if (state.dragging) {
-        state.position = {
-            io.mouse_position.x - state.drag_offset.x,
-            io.mouse_position.y - state.drag_offset.y,
+    if (state.Dragging) {
+        state.Position = {
+            io.MousePosition.X - state.DragOffset.X,
+            io.MousePosition.Y - state.DragOffset.Y,
         };
 
         bounds = {
-            state.position,
-            {state.position.x + width, state.position.y + height},
+            state.Position,
+            {state.Position.X + Width, state.Position.Y + Height},
         };
     }
 
-    advance_layout(height);
+    advance_layout(Height);
 
-    const rect current_title_bounds {bounds.min, {bounds.max.x, bounds.min.y + title_height}};
-    const rect content_bounds {{bounds.min.x + 1.0F, bounds.min.y + title_height}, {bounds.max.x - 1.0F, bounds.max.y - 1.0F}};
-    const rect scroll_clip {{bounds.min.x + 18.0F * scale, bounds.min.y + title_height + 16.0F * scale}, {bounds.max.x - 18.0F * scale, bounds.max.y - 16.0F * scale}};
-    const rect shadow_1 {{bounds.min.x + 3.0F * scale, bounds.min.y + 4.0F * scale}, {bounds.max.x + 3.0F * scale, bounds.max.y + 4.0F * scale}};
-    const rect shadow_2 {{bounds.min.x + 1.0F * scale, bounds.min.y + 2.0F * scale}, {bounds.max.x + 1.0F * scale, bounds.max.y + 2.0F * scale}};
+    const Rect current_title_bounds {bounds.Min, {bounds.Max.X, bounds.Min.Y + title_height}};
+    const Rect content_bounds {{bounds.Min.X + 1.0F, bounds.Min.Y + title_height}, {bounds.Max.X - 1.0F, bounds.Max.Y - 1.0F}};
+    const Rect scroll_clip {{bounds.Min.X + 18.0F * scale, bounds.Min.Y + title_height + 16.0F * scale}, {bounds.Max.X - 18.0F * scale, bounds.Max.Y - 16.0F * scale}};
+    const Rect shadow_1 {{bounds.Min.X + 3.0F * scale, bounds.Min.Y + 4.0F * scale}, {bounds.Max.X + 3.0F * scale, bounds.Max.Y + 4.0F * scale}};
+    const Rect shadow_2 {{bounds.Min.X + 1.0F * scale, bounds.Min.Y + 2.0F * scale}, {bounds.Max.X + 1.0F * scale, bounds.Max.Y + 2.0F * scale}};
 
     add_soft_rect(shadow_1, 4.0F * scale, {0.0F, 0.0F, 0.0F, 0.18F});
     add_soft_rect(shadow_2, 4.0F * scale, {0.0F, 0.0F, 0.0F, 0.14F});
-    add_soft_rect(bounds, 4.0F * scale, theme.window_background);
-    add_filled_rect(content_bounds, theme.window_background);
-    add_soft_rect(current_title_bounds, 4.0F * scale, hovered ? theme.window_title_active : theme.window_title);
-    add_filled_rect({{current_title_bounds.min.x, current_title_bounds.max.y - 4.0F * scale}, current_title_bounds.max}, hovered ? theme.window_title_active : theme.window_title);
-    add_hline(bounds.min.x, bounds.max.x, current_title_bounds.max.y, {theme.window_border.r, theme.window_border.g, theme.window_border.b, 0.70F});
-    add_soft_outline(bounds, 4.0F * scale, theme.window_border);
-    add_text({{current_title_bounds.min.x + 10.0F * scale, current_title_bounds.min.y + 10.0F * scale}, current_title_bounds.max}, title, theme.text);
+    add_soft_rect(bounds, 4.0F * scale, theme.WindowBackground);
+    add_filled_rect(content_bounds, theme.WindowBackground);
+    add_soft_rect(current_title_bounds, 4.0F * scale, Hovered ? theme.WindowTitleActive : theme.WindowTitle);
+    add_filled_rect({{current_title_bounds.Min.X, current_title_bounds.Max.Y - 4.0F * scale}, current_title_bounds.Max}, Hovered ? theme.WindowTitleActive : theme.WindowTitle);
+    add_hline(bounds.Min.X, bounds.Max.X, current_title_bounds.Max.Y, {theme.WindowBorder.R, theme.WindowBorder.G, theme.WindowBorder.B, 0.70F});
+    add_soft_outline(bounds, 4.0F * scale, theme.WindowBorder);
+    add_text({{current_title_bounds.Min.X + 10.0F * scale, current_title_bounds.Min.Y + 10.0F * scale}, current_title_bounds.Max}, Title, theme.Text);
 
-    const float visible_height = scroll_clip.max.y - scroll_clip.min.y;
-    const float max_scroll = std::max(0.0F, state.content_height - visible_height);
-    if (hovered && io.mouse_wheel != 0.0F) {
-        state.scroll_y = std::clamp(state.scroll_y - io.mouse_wheel * 44.0F * scale, 0.0F, max_scroll);
+    const float VisibleHeight = scroll_clip.Max.Y - scroll_clip.Min.Y;
+    const float MaxScroll = std::max(0.0F, state.ContentHeight - VisibleHeight);
+    if (Hovered && io.MouseWheel != 0.0F) {
+        state.ScrollY = std::clamp(state.ScrollY - io.MouseWheel * 44.0F * scale, 0.0F, MaxScroll);
     }
-    state.scroll_y = std::clamp(state.scroll_y, 0.0F, max_scroll);
+    state.ScrollY = std::clamp(state.ScrollY, 0.0F, MaxScroll);
 
-    const vec2 content_cursor {
-        scroll_clip.min.x,
-        scroll_clip.min.y - state.scroll_y,
+    const Vec2 content_cursor {
+        scroll_clip.Min.X,
+        scroll_clip.Min.Y - state.ScrollY,
     };
 
     layout_stack.push_back(layout);
     window_stack.push_back({
-        .title = std::string(title),
-        .content_start_y = content_cursor.y,
-        .content_padding_y = 16.0F * scale,
-        .visible_height = visible_height,
-        .max_scroll = max_scroll,
-        .hovered = hovered,
-        .scroll_track = {{scroll_clip.max.x - 7.0F * scale, scroll_clip.min.y}, {scroll_clip.max.x - 3.0F * scale, scroll_clip.max.y}},
+        .Title = std::string(Title),
+        .ContentStartY = content_cursor.Y,
+        .ContentPaddingY = 16.0F * scale,
+        .VisibleHeight = VisibleHeight,
+        .MaxScroll = MaxScroll,
+        .Hovered = Hovered,
+        .ScrollTrack = {{scroll_clip.Max.X - 7.0F * scale, scroll_clip.Min.Y}, {scroll_clip.Max.X - 3.0F * scale, scroll_clip.Max.Y}},
     });
-    layout.cursor = content_cursor;
-    layout.start_x = content_cursor.x;
-    layout.content_width = scroll_clip.max.x - scroll_clip.min.x - 18.0F * scale;
-    layout.clip = scroll_clip;
-    layout.has_clip = true;
-    layout.has_last_item = false;
-    layout.line_bottom = content_cursor.y;
-    layout.next_item_width = 0.0F;
-    layout.indent_width = 0.0F;
+    layout.Cursor = content_cursor;
+    layout.StartX = content_cursor.X;
+    layout.ContentWidth = scroll_clip.Max.X - scroll_clip.Min.X - 18.0F * scale;
+    layout.Clip = scroll_clip;
+    layout.HasClip = true;
+    layout.HasLastItem = false;
+    layout.LineBottom = content_cursor.Y;
+    layout.NextItemWidth = 0.0F;
+    layout.IndentWidth = 0.0F;
 
     return true;
 }
 
-void end_window()
+void EndWindow()
 {
     if (layout_stack.empty() || window_stack.empty()) {
-        throw std::logic_error("farcal window stack is empty");
+        throw std::logic_error("farcal Window stack is empty");
     }
 
     const window_layout_state window_layout = window_stack.back();
     window_stack.pop_back();
 
-    window_state& state = windows[window_layout.title];
-    state.content_height = std::max(0.0F, layout.cursor.y - window_layout.content_start_y + window_layout.content_padding_y);
+    window_state& state = windows[window_layout.Title];
+    state.ContentHeight = std::max(0.0F, layout.Cursor.Y - window_layout.ContentStartY + window_layout.ContentPaddingY);
 
-    if (window_layout.max_scroll > 0.0F) {
-        const style& theme = current_style();
-        const rect track = window_layout.scroll_track;
-        const float track_height = track.max.y - track.min.y;
-        const float thumb_height = std::max(28.0F * theme.frame_scale, track_height * std::min(1.0F, window_layout.visible_height / state.content_height));
-        const float thumb_y = track.min.y + (track_height - thumb_height) * (state.scroll_y / window_layout.max_scroll);
-        const rect thumb {{track.min.x, thumb_y}, {track.max.x, thumb_y + thumb_height}};
+    if (window_layout.MaxScroll > 0.0F) {
+        const Style& theme = CurrentStyle();
+        const Rect track = window_layout.ScrollTrack;
+        const float track_height = track.Max.Y - track.Min.Y;
+        const float thumb_height = std::max(28.0F * theme.FrameScale, track_height * std::min(1.0F, window_layout.VisibleHeight / state.ContentHeight));
+        const float thumb_y = track.Min.Y + (track_height - thumb_height) * (state.ScrollY / window_layout.MaxScroll);
+        const Rect thumb {{track.Min.X, thumb_y}, {track.Max.X, thumb_y + thumb_height}};
 
-        add_soft_rect(track, 2.0F * theme.frame_scale, {0.0F, 0.0F, 0.0F, 0.20F});
-        add_soft_rect(thumb, 2.0F * theme.frame_scale, {theme.text_muted.r, theme.text_muted.g, theme.text_muted.b, window_layout.hovered ? 0.70F : 0.42F});
+        add_soft_rect(track, 2.0F * theme.FrameScale, {0.0F, 0.0F, 0.0F, 0.20F});
+        add_soft_rect(thumb, 2.0F * theme.FrameScale, {theme.TextMuted.R, theme.TextMuted.G, theme.TextMuted.B, window_layout.Hovered ? 0.70F : 0.42F});
     }
 
     layout = layout_stack.back();

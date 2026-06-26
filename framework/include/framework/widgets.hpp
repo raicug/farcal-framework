@@ -9,33 +9,33 @@
 
 namespace farcal {
 
-void text(std::string_view value);
-void text_secondary(std::string_view value);
-void title_text(std::string_view value);
-void section_text(std::string_view value);
-void separator();
-void spacing();
-void same_line(float spacing = -1.0F);
-void begin_group();
-void end_group();
-void indent(float width = 0.0F);
-void unindent(float width = 0.0F);
-void dummy(vec2 size);
-void set_next_item_width(float width);
-bool is_item_hovered();
-bool is_item_active();
-bool is_item_focused();
-bool button(std::string_view label);
-bool primary_button(std::string_view label);
-bool checkbox(std::string_view label, bool* value);
-bool slider_float(std::string_view label, float* value, float minimum, float maximum);
-bool begin_window(std::string_view title);
-void end_window();
+void Text(std::string_view value);
+void TextSecondary(std::string_view value);
+void TitleText(std::string_view value);
+void SectionText(std::string_view value);
+void Separator();
+void Spacing();
+void SameLine(float Spacing = -1.0F);
+void BeginGroup();
+void EndGroup();
+void Indent(float Width = 0.0F);
+void Unindent(float Width = 0.0F);
+void Dummy(Vec2 size);
+void SetNextItemWidth(float Width);
+bool IsItemHovered();
+bool IsItemActive();
+bool IsItemFocused();
+bool Button(std::string_view label);
+bool PrimaryButton(std::string_view label);
+bool Checkbox(std::string_view label, bool* value);
+bool SliderFloat(std::string_view label, float* value, float minimum, float maximum);
+bool BeginWindow(std::string_view Title);
+void EndWindow();
 
 template <std::invocable Callback>
-bool button(std::string_view label, Callback&& callback)
+bool Button(std::string_view label, Callback&& callback)
 {
-    const bool clicked = button(label);
+    const bool clicked = Button(label);
     if (clicked) {
         callback();
     }
@@ -43,9 +43,9 @@ bool button(std::string_view label, Callback&& callback)
 }
 
 template <std::invocable Callback>
-bool primary_button(std::string_view label, Callback&& callback)
+bool PrimaryButton(std::string_view label, Callback&& callback)
 {
-    const bool clicked = primary_button(label);
+    const bool clicked = PrimaryButton(label);
     if (clicked) {
         callback();
     }
@@ -53,21 +53,21 @@ bool primary_button(std::string_view label, Callback&& callback)
 }
 
 template <std::invocable Callback>
-void window_panel(std::string_view title, Callback&& callback)
+void WindowPanel(std::string_view Title, Callback&& callback)
 {
-    if (begin_window(title)) {
+    if (BeginWindow(Title)) {
         callback();
     }
 
-    end_window();
+    EndWindow();
 }
 
 template <std::invocable Callback>
-void group(Callback&& callback)
+void Group(Callback&& callback)
 {
-    begin_group();
+    BeginGroup();
     callback();
-    end_group();
+    EndGroup();
 }
 
 }

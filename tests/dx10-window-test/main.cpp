@@ -8,15 +8,15 @@
 int main()
 {
     try {
-        farcal::create_context();
+        farcal::CreateContext();
 
-        farcal::window window({
-            .title = L"Farcal DX10 Test",
-            .width = 1280,
-            .height = 720,
+        farcal::Window Window({
+            .Title = L"Farcal DX10 Test",
+            .Width = 1280,
+            .Height = 720,
         });
 
-        window.set_wnd_proc_hook([](HWND, UINT message, WPARAM, LPARAM) -> std::optional<LRESULT> {
+        Window.SetWndProcHook([](HWND, UINT message, WPARAM, LPARAM) -> std::optional<LRESULT> {
             if (message == WM_SETCURSOR) {
                 return std::nullopt;
             }
@@ -24,10 +24,10 @@ int main()
             return std::nullopt;
         });
 
-        farcal::dx10_renderer renderer(window);
-        if (!renderer.valid()) {
+        farcal::Dx10Renderer renderer(Window);
+        if (!renderer.Valid()) {
             std::fprintf(stderr, "failed to initialize DX10 renderer\n");
-            farcal::destroy_context();
+            farcal::DestroyContext();
             return 1;
         }
 
@@ -37,120 +37,120 @@ int main()
         bool diagnostics = false;
         float exposure = 1.25F;
         float gamma = 2.20F;
-        float maximum_fps = 144.0F;
-        farcal::set_max_fps(maximum_fps);
+        float MaximumFps = 144.0F;
+        farcal::SetMaxFps(MaximumFps);
 
-        while (window.poll_events()) {
-            farcal::begin_frame(window.consume_input());
+        while (Window.PollEvents()) {
+            farcal::BeginFrame(Window.ConsumeInput());
 
-            farcal::background_renderer().commands.push_back({
-                .type = farcal::draw_command_type::filled_rect,
-                .bounds = {{0.0F, 0.0F}, {static_cast<float>(window.width()), static_cast<float>(window.height())}},
-                .tint = {0.055F, 0.055F, 0.064F, 1.0F},
+            farcal::BackgroundRenderer().Commands.push_back({
+                .Type = farcal::DrawCommandType::FilledRect,
+                .Bounds = {{0.0F, 0.0F}, {static_cast<float>(Window.Width()), static_cast<float>(Window.Height())}},
+                .Tint = {0.055F, 0.055F, 0.064F, 1.0F},
             });
 
-            farcal::frame([&] {
-                farcal::window_panel("Farcal Framework", [&] {
-                    const farcal::statistics& stats = farcal::stats();
-                    char fps_text[64] {};
-                    char frame_text[64] {};
-                    char draw_text[64] {};
-                    char memory_text[64] {};
-                    std::snprintf(fps_text, sizeof(fps_text), "UI FPS %.1f", stats.frames_per_second);
-                    std::snprintf(frame_text, sizeof(frame_text), "UI frame %.2f ms", stats.frame_seconds * 1000.0);
-                    std::snprintf(draw_text, sizeof(draw_text), "Draw commands %zu", stats.draw_command_count);
-                    std::snprintf(memory_text, sizeof(memory_text), "Memory %.1f MB", static_cast<double>(stats.memory_working_set) / (1024.0 * 1024.0));
+            farcal::Frame([&] {
+                farcal::WindowPanel("Farcal Framework", [&] {
+                    const farcal::Statistics& Stats = farcal::Stats();
+                    char FpsText[64] {};
+                    char FrameText[64] {};
+                    char DrawText[64] {};
+                    char MemoryText[64] {};
+                    std::snprintf(FpsText, sizeof(FpsText), "UI FPS %.1f", Stats.FramesPerSecond);
+                    std::snprintf(FrameText, sizeof(FrameText), "UI frame %.2f ms", Stats.FrameSeconds * 1000.0);
+                    std::snprintf(DrawText, sizeof(DrawText), "Draw commands %zu", Stats.DrawCommandCount);
+                    std::snprintf(MemoryText, sizeof(MemoryText), "Memory %.1f MB", static_cast<double>(Stats.MemoryWorkingSet) / (1024.0 * 1024.0));
 
-                    farcal::title_text("DX10 Backend Preview");
-                    farcal::text_secondary("Same immediate-mode UI rendered through DirectX 10.");
-                    farcal::separator();
+                    farcal::TitleText("DX10 Backend Preview");
+                    farcal::TextSecondary("Same immediate-mode UI rendered through DirectX 10.");
+                    farcal::Separator();
 
-                    farcal::section_text("Main");
-                    farcal::primary_button(clicked ? "Enabled" : "Enable Feature", [&] {
+                    farcal::SectionText("Main");
+                    farcal::PrimaryButton(clicked ? "Enabled" : "Enable Feature", [&] {
                         clicked = !clicked;
                     });
 
-                    farcal::button(compiling ? "Queued" : "Queue Task", [&] {
+                    farcal::Button(compiling ? "Queued" : "Queue Task", [&] {
                         compiling = !compiling;
                     });
 
-                    farcal::push_style_var(farcal::style_var::anti_aliasing, 1.35F);
-                    farcal::checkbox("VSync", &vsync);
-                    farcal::checkbox("Diagnostics Overlay", &diagnostics);
-                    farcal::pop_style_var();
+                    farcal::PushStyleVar(farcal::StyleVar::AntiAliasing, 1.35F);
+                    farcal::Checkbox("VSync", &vsync);
+                    farcal::Checkbox("Diagnostics Overlay", &diagnostics);
+                    farcal::PopStyleVar();
 
-                    farcal::slider_float("Exposure", &exposure, 0.0F, 5.0F);
-                    farcal::slider_float("Gamma", &gamma, 1.0F, 3.0F);
-                    if (farcal::slider_float("Max FPS", &maximum_fps, 0.0F, 240.0F)) {
-                        farcal::set_max_fps(maximum_fps);
+                    farcal::SliderFloat("Exposure", &exposure, 0.0F, 5.0F);
+                    farcal::SliderFloat("Gamma", &gamma, 1.0F, 3.0F);
+                    if (farcal::SliderFloat("Max FPS", &MaximumFps, 0.0F, 240.0F)) {
+                        farcal::SetMaxFps(MaximumFps);
                     }
 
-                    farcal::spacing();
-                    farcal::section_text("Status");
+                    farcal::Spacing();
+                    farcal::SectionText("Status");
 
-                    farcal::push_style_color(farcal::style_color::text, {0.322F, 0.824F, 0.451F, 1.0F});
-                    farcal::text(fps_text);
-                    farcal::pop_style_color();
+                    farcal::PushStyleColor(farcal::StyleColor::Text, {0.322F, 0.824F, 0.451F, 1.0F});
+                    farcal::Text(FpsText);
+                    farcal::PopStyleColor();
 
-                    farcal::push_style_color(farcal::style_color::text, {0.722F, 0.753F, 0.800F, 1.0F});
-                    farcal::text(frame_text);
-                    farcal::text(draw_text);
-                    farcal::text(memory_text);
-                    farcal::pop_style_color();
+                    farcal::PushStyleColor(farcal::StyleColor::Text, {0.722F, 0.753F, 0.800F, 1.0F});
+                    farcal::Text(FrameText);
+                    farcal::Text(DrawText);
+                    farcal::Text(MemoryText);
+                    farcal::PopStyleColor();
 
-                    farcal::button("Stop Polling Next Frame", [&] {
-                        window.cancel_next_poll();
+                    farcal::Button("Stop Polling Next Frame", [&] {
+                        Window.CancelNextPoll();
                     });
 
-                    farcal::spacing();
-                    farcal::section_text("Core Layout");
-                    farcal::group([] {
-                        farcal::set_next_item_width(104.0F);
-                        farcal::button("Left");
-                        farcal::same_line();
-                        farcal::set_next_item_width(104.0F);
-                        farcal::button("Right");
+                    farcal::Spacing();
+                    farcal::SectionText("Core Layout");
+                    farcal::Group([] {
+                        farcal::SetNextItemWidth(104.0F);
+                        farcal::Button("Left");
+                        farcal::SameLine();
+                        farcal::SetNextItemWidth(104.0F);
+                        farcal::Button("Right");
                     });
 
-                    farcal::indent();
-                    farcal::text_secondary(farcal::is_item_hovered() ? "group hovered" : "group idle");
-                    farcal::unindent();
-                    farcal::dummy({1.0F, 6.0F});
+                    farcal::Indent();
+                    farcal::TextSecondary(farcal::IsItemHovered() ? "Group hovered" : "Group idle");
+                    farcal::Unindent();
+                    farcal::Dummy({1.0F, 6.0F});
 
-                    farcal::spacing();
-                    farcal::section_text("Scrollable Assets");
+                    farcal::Spacing();
+                    farcal::SectionText("Scrollable Assets");
 
                     for (int index = 0; index < 24; ++index) {
                         char label[64] {};
                         std::snprintf(label, sizeof(label), "DX10_TestAsset_%02d", index + 1);
 
                         if (index == 3 || index == 11 || index == 17) {
-                            farcal::push_style_color(farcal::style_color::text, {0.910F, 0.698F, 0.298F, 1.0F});
-                            farcal::text(label);
-                            farcal::pop_style_color();
+                            farcal::PushStyleColor(farcal::StyleColor::Text, {0.910F, 0.698F, 0.298F, 1.0F});
+                            farcal::Text(label);
+                            farcal::PopStyleColor();
                         } else {
-                            farcal::text_secondary(label);
+                            farcal::TextSecondary(label);
                         }
                     }
                 });
             });
 
-            farcal::foreground_renderer().commands.push_back({
-                .type = farcal::draw_command_type::rect,
-                .bounds = {{8.0F, 8.0F}, {static_cast<float>(window.width()) - 8.0F, static_cast<float>(window.height()) - 8.0F}},
-                .tint = {1.0F, 1.0F, 1.0F, 0.035F},
+            farcal::ForegroundRenderer().Commands.push_back({
+                .Type = farcal::DrawCommandType::Rect,
+                .Bounds = {{8.0F, 8.0F}, {static_cast<float>(Window.Width()) - 8.0F, static_cast<float>(Window.Height()) - 8.0F}},
+                .Tint = {1.0F, 1.0F, 1.0F, 0.035F},
             });
 
-            farcal::end_frame();
-            renderer.render(farcal::draw());
-            renderer.present(vsync);
-            farcal::limit_frame_rate();
+            farcal::EndFrame();
+            renderer.Render(farcal::Draw());
+            renderer.Present(vsync);
+            farcal::LimitFrameRate();
         }
 
-        farcal::destroy_context();
+        farcal::DestroyContext();
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());
-        farcal::destroy_context();
+        farcal::DestroyContext();
         return 1;
     }
 

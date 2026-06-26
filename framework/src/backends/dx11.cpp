@@ -28,19 +28,19 @@ void release_if_set(T*& object)
 }
 
 struct vertex {
-    float position[2] {};
-    float color[4] {};
+    float Position[2] {};
+    float Color[4] {};
 };
 
 struct render_batch {
-    rect clip {};
-    UINT index_start {};
-    UINT index_count {};
+    Rect Clip {};
+    UINT IndexStart {};
+    UINT IndexCount {};
 };
 
 struct constants {
-    float viewport[2] {};
-    float padding[2] {};
+    float Viewport[2] {};
+    float Padding[2] {};
 };
 
 constexpr char shader_source[] =
@@ -56,43 +56,43 @@ constexpr char shader_source[] =
     "}"
     "float4 ps_main(ps_in input) : SV_Target { return input.color; }";
 
-bool same_clip(rect a, rect b)
+bool same_clip(Rect a, Rect b)
 {
-    return a.min.x == b.min.x && a.min.y == b.min.y && a.max.x == b.max.x && a.max.y == b.max.y;
+    return a.Min.X == b.Min.X && a.Min.Y == b.Min.Y && a.Max.X == b.Max.X && a.Max.Y == b.Max.Y;
 }
 
-void begin_batch(std::vector<render_batch>& batches, rect clip, UINT index_start)
+void begin_batch(std::vector<render_batch>& batches, Rect clip, UINT IndexStart)
 {
-    if (!batches.empty() && batches.back().index_count == 0) {
-        batches.back().clip = clip;
-        batches.back().index_start = index_start;
+    if (!batches.empty() && batches.back().IndexCount == 0) {
+        batches.back().Clip = clip;
+        batches.back().IndexStart = IndexStart;
         return;
     }
 
-    if (!batches.empty() && same_clip(batches.back().clip, clip)) {
+    if (!batches.empty() && same_clip(batches.back().Clip, clip)) {
         return;
     }
 
     batches.push_back({
-        .clip = clip,
-        .index_start = index_start,
-        .index_count = 0,
+        .Clip = clip,
+        .IndexStart = IndexStart,
+        .IndexCount = 0,
     });
 }
 
-void push_rect(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, rect bounds, rect clip, color tint)
+void push_rect(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, Rect bounds, Rect clip, Color tint)
 {
-    if (bounds.max.x <= bounds.min.x || bounds.max.y <= bounds.min.y) {
+    if (bounds.Max.X <= bounds.Min.X || bounds.Max.Y <= bounds.Min.Y) {
         return;
     }
 
     begin_batch(batches, clip, static_cast<UINT>(indices.size()));
 
     const std::uint32_t base = static_cast<std::uint32_t>(vertices.size());
-    const vertex a {{bounds.min.x, bounds.min.y}, {tint.r, tint.g, tint.b, tint.a}};
-    const vertex b {{bounds.max.x, bounds.min.y}, {tint.r, tint.g, tint.b, tint.a}};
-    const vertex c {{bounds.max.x, bounds.max.y}, {tint.r, tint.g, tint.b, tint.a}};
-    const vertex d {{bounds.min.x, bounds.max.y}, {tint.r, tint.g, tint.b, tint.a}};
+    const vertex a {{bounds.Min.X, bounds.Min.Y}, {tint.R, tint.G, tint.B, tint.A}};
+    const vertex b {{bounds.Max.X, bounds.Min.Y}, {tint.R, tint.G, tint.B, tint.A}};
+    const vertex c {{bounds.Max.X, bounds.Max.Y}, {tint.R, tint.G, tint.B, tint.A}};
+    const vertex d {{bounds.Min.X, bounds.Max.Y}, {tint.R, tint.G, tint.B, tint.A}};
 
     vertices.push_back(a);
     vertices.push_back(b);
@@ -106,24 +106,24 @@ void push_rect(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indice
     indices.push_back(base + 2);
     indices.push_back(base + 3);
 
-    batches.back().index_count += 6;
+    batches.back().IndexCount += 6;
 }
 
-color alpha(color value, float multiplier)
+Color alpha(Color value, float multiplier)
 {
-    value.a *= multiplier;
+    value.A *= multiplier;
     return value;
 }
 
-void push_quad(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, vec2 a, vec2 b, vec2 c, vec2 d, rect clip, color ca, color cb, color cc, color cd)
+void push_quad(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, Vec2 a, Vec2 b, Vec2 c, Vec2 d, Rect clip, Color ca, Color cb, Color cc, Color cd)
 {
     begin_batch(batches, clip, static_cast<UINT>(indices.size()));
 
     const std::uint32_t base = static_cast<std::uint32_t>(vertices.size());
-    vertices.push_back({{a.x, a.y}, {ca.r, ca.g, ca.b, ca.a}});
-    vertices.push_back({{b.x, b.y}, {cb.r, cb.g, cb.b, cb.a}});
-    vertices.push_back({{c.x, c.y}, {cc.r, cc.g, cc.b, cc.a}});
-    vertices.push_back({{d.x, d.y}, {cd.r, cd.g, cd.b, cd.a}});
+    vertices.push_back({{a.X, a.Y}, {ca.R, ca.G, ca.B, ca.A}});
+    vertices.push_back({{b.X, b.Y}, {cb.R, cb.G, cb.B, cb.A}});
+    vertices.push_back({{c.X, c.Y}, {cc.R, cc.G, cc.B, cc.A}});
+    vertices.push_back({{d.X, d.Y}, {cd.R, cd.G, cd.B, cd.A}});
 
     indices.push_back(base);
     indices.push_back(base + 1);
@@ -132,56 +132,56 @@ void push_quad(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indice
     indices.push_back(base + 2);
     indices.push_back(base + 3);
 
-    batches.back().index_count += 6;
+    batches.back().IndexCount += 6;
 }
 
-rect clipped(rect bounds, rect clip)
+Rect clipped(Rect bounds, Rect clip)
 {
     return {
-        {(std::max)(bounds.min.x, clip.min.x), (std::max)(bounds.min.y, clip.min.y)},
-        {(std::min)(bounds.max.x, clip.max.x), (std::min)(bounds.max.y, clip.max.y)},
+        {(std::max)(bounds.Min.X, clip.Min.X), (std::max)(bounds.Min.Y, clip.Min.Y)},
+        {(std::min)(bounds.Max.X, clip.Max.X), (std::min)(bounds.Max.Y, clip.Max.Y)},
     };
 }
 
-bool empty_clip(rect clip)
+bool empty_clip(Rect clip)
 {
-    return clip.max.x <= clip.min.x || clip.max.y <= clip.min.y;
+    return clip.Max.X <= clip.Min.X || clip.Max.Y <= clip.Min.Y;
 }
 
-rect viewport_clip(int width, int height)
+Rect viewport_clip(int Width, int Height)
 {
-    return {{0.0F, 0.0F}, {static_cast<float>(width), static_cast<float>(height)}};
+    return {{0.0F, 0.0F}, {static_cast<float>(Width), static_cast<float>(Height)}};
 }
 
-rect effective_clip(rect clip, int width, int height)
+Rect effective_clip(Rect clip, int Width, int Height)
 {
-    return empty_clip(clip) ? viewport_clip(width, height) : clip;
+    return empty_clip(clip) ? viewport_clip(Width, Height) : clip;
 }
 
-void push_line_rect(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, rect bounds, rect clip, color tint, float thickness)
+void push_line_rect(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, Rect bounds, Rect clip, Color tint, float thickness)
 {
-    push_rect(vertices, indices, batches, {bounds.min, {bounds.max.x, bounds.min.y + thickness}}, clip, tint);
-    push_rect(vertices, indices, batches, {{bounds.min.x, bounds.max.y - thickness}, bounds.max}, clip, tint);
-    push_rect(vertices, indices, batches, {bounds.min, {bounds.min.x + thickness, bounds.max.y}}, clip, tint);
-    push_rect(vertices, indices, batches, {{bounds.max.x - thickness, bounds.min.y}, bounds.max}, clip, tint);
+    push_rect(vertices, indices, batches, {bounds.Min, {bounds.Max.X, bounds.Min.Y + thickness}}, clip, tint);
+    push_rect(vertices, indices, batches, {{bounds.Min.X, bounds.Max.Y - thickness}, bounds.Max}, clip, tint);
+    push_rect(vertices, indices, batches, {bounds.Min, {bounds.Min.X + thickness, bounds.Max.Y}}, clip, tint);
+    push_rect(vertices, indices, batches, {{bounds.Max.X - thickness, bounds.Min.Y}, bounds.Max}, clip, tint);
 }
 
-void push_line_rect_clipped(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, rect bounds, rect clip, color tint, float thickness)
+void push_line_rect_clipped(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, Rect bounds, Rect clip, Color tint, float thickness)
 {
-    push_rect(vertices, indices, batches, clipped({bounds.min, {bounds.max.x, bounds.min.y + thickness}}, clip), clip, tint);
-    push_rect(vertices, indices, batches, clipped({{bounds.min.x, bounds.max.y - thickness}, bounds.max}, clip), clip, tint);
-    push_rect(vertices, indices, batches, clipped({bounds.min, {bounds.min.x + thickness, bounds.max.y}}, clip), clip, tint);
-    push_rect(vertices, indices, batches, clipped({{bounds.max.x - thickness, bounds.min.y}, bounds.max}, clip), clip, tint);
+    push_rect(vertices, indices, batches, clipped({bounds.Min, {bounds.Max.X, bounds.Min.Y + thickness}}, clip), clip, tint);
+    push_rect(vertices, indices, batches, clipped({{bounds.Min.X, bounds.Max.Y - thickness}, bounds.Max}, clip), clip, tint);
+    push_rect(vertices, indices, batches, clipped({bounds.Min, {bounds.Min.X + thickness, bounds.Max.Y}}, clip), clip, tint);
+    push_rect(vertices, indices, batches, clipped({{bounds.Max.X - thickness, bounds.Min.Y}, bounds.Max}, clip), clip, tint);
 }
 
-void push_line_segment(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, vec2 start, vec2 end, rect clip, color tint, float thickness, float anti_aliasing)
+void push_line_segment(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches, Vec2 start, Vec2 end, Rect clip, Color tint, float thickness, float AntiAliasing)
 {
     if (empty_clip(clip)) {
         return;
     }
 
-    const float dx = end.x - start.x;
-    const float dy = end.y - start.y;
+    const float dx = end.X - start.X;
+    const float dy = end.Y - start.Y;
     const float length = std::sqrt(dx * dx + dy * dy);
     if (length <= 0.001F) {
         return;
@@ -192,11 +192,11 @@ void push_line_segment(std::vector<vertex>& vertices, std::vector<std::uint32_t>
     const float normal_x = -dir_y;
     const float normal_y = dir_x;
     const float half = (std::max)(0.5F, thickness * 0.5F);
-    const float feather = (std::max)(0.0F, anti_aliasing);
-    const vec2 a {start.x + normal_x * half, start.y + normal_y * half};
-    const vec2 b {end.x + normal_x * half, end.y + normal_y * half};
-    const vec2 c {end.x - normal_x * half, end.y - normal_y * half};
-    const vec2 d {start.x - normal_x * half, start.y - normal_y * half};
+    const float feather = (std::max)(0.0F, AntiAliasing);
+    const Vec2 a {start.X + normal_x * half, start.Y + normal_y * half};
+    const Vec2 b {end.X + normal_x * half, end.Y + normal_y * half};
+    const Vec2 c {end.X - normal_x * half, end.Y - normal_y * half};
+    const Vec2 d {start.X - normal_x * half, start.Y - normal_y * half};
 
     push_quad(vertices, indices, batches, a, b, c, d, clip, tint, tint, tint, tint);
 
@@ -204,12 +204,12 @@ void push_line_segment(std::vector<vertex>& vertices, std::vector<std::uint32_t>
         return;
     }
 
-    const color transparent = alpha(tint, 0.0F);
+    const Color transparent = alpha(tint, 0.0F);
     const float outer = half + feather;
-    const vec2 outer_a {start.x + normal_x * outer - dir_x * feather, start.y + normal_y * outer - dir_y * feather};
-    const vec2 outer_b {end.x + normal_x * outer + dir_x * feather, end.y + normal_y * outer + dir_y * feather};
-    const vec2 outer_c {end.x - normal_x * outer + dir_x * feather, end.y - normal_y * outer + dir_y * feather};
-    const vec2 outer_d {start.x - normal_x * outer - dir_x * feather, start.y - normal_y * outer - dir_y * feather};
+    const Vec2 outer_a {start.X + normal_x * outer - dir_x * feather, start.Y + normal_y * outer - dir_y * feather};
+    const Vec2 outer_b {end.X + normal_x * outer + dir_x * feather, end.Y + normal_y * outer + dir_y * feather};
+    const Vec2 outer_c {end.X - normal_x * outer + dir_x * feather, end.Y - normal_y * outer + dir_y * feather};
+    const Vec2 outer_d {start.X - normal_x * outer - dir_x * feather, start.Y - normal_y * outer - dir_y * feather};
 
     push_quad(vertices, indices, batches, outer_a, outer_b, b, a, clip, transparent, transparent, tint, tint);
     push_quad(vertices, indices, batches, d, c, outer_c, outer_d, clip, tint, tint, transparent, transparent);
@@ -217,25 +217,25 @@ void push_line_segment(std::vector<vertex>& vertices, std::vector<std::uint32_t>
     push_quad(vertices, indices, batches, b, outer_b, outer_c, c, clip, tint, transparent, transparent, tint);
 }
 
-void append_command_geometry(const draw_command& command, int width, int height, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches)
+void append_command_geometry(const DrawCommand& command, int Width, int Height, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<render_batch>& batches)
 {
-    switch (command.type) {
-    case draw_command_type::filled_rect:
+    switch (command.Type) {
+    case DrawCommandType::FilledRect:
     {
-        const rect clip = effective_clip(command.clip, width, height);
-        push_rect(vertices, indices, batches, clipped(command.bounds, clip), clip, command.tint);
+        const Rect clip = effective_clip(command.Clip, Width, Height);
+        push_rect(vertices, indices, batches, clipped(command.Bounds, clip), clip, command.Tint);
         break;
     }
 
-    case draw_command_type::rect:
-        push_line_rect_clipped(vertices, indices, batches, command.bounds, effective_clip(command.clip, width, height), command.tint, command.thickness);
+    case DrawCommandType::Rect:
+        push_line_rect_clipped(vertices, indices, batches, command.Bounds, effective_clip(command.Clip, Width, Height), command.Tint, command.Thickness);
         break;
 
-    case draw_command_type::line:
-        push_line_segment(vertices, indices, batches, command.start, command.end, effective_clip(command.clip, width, height), command.tint, command.thickness, command.anti_aliasing);
+    case DrawCommandType::Line:
+        push_line_segment(vertices, indices, batches, command.Start, command.End, effective_clip(command.Clip, Width, Height), command.Tint, command.Thickness, command.AntiAliasing);
         break;
 
-    case draw_command_type::text:
+    case DrawCommandType::Text:
         break;
     }
 }
@@ -252,85 +252,85 @@ std::wstring widen(std::string_view value)
     return result;
 }
 
-D2D1_COLOR_F to_d2d(color value)
+D2D1_COLOR_F to_d2d(Color value)
 {
-    return D2D1::ColorF(value.r, value.g, value.b, value.a);
+    return D2D1::ColorF(value.R, value.G, value.B, value.A);
 }
 
 }
 
-dx11_renderer::dx11_renderer(window& target)
-    : window_(&target)
+Dx11Renderer::Dx11Renderer(Window& target)
+    : Window_(&target)
 {
-    if (create_device()) {
-        create_render_target();
-        create_pipeline();
-        create_text_pipeline();
+    if (CreateDevice()) {
+        CreateRenderTarget();
+        CreatePipeline();
+        CreateTextPipeline();
     }
 }
 
-dx11_renderer::~dx11_renderer()
+Dx11Renderer::~Dx11Renderer()
 {
-    release();
+    Release();
 }
 
-bool dx11_renderer::valid() const
+bool Dx11Renderer::Valid() const
 {
-    return device_ != nullptr && context_ != nullptr && swap_chain_ != nullptr && render_target_ != nullptr;
+    return Device_ != nullptr && Context_ != nullptr && SwapChain_ != nullptr && RenderTarget_ != nullptr;
 }
 
-void dx11_renderer::resize(int width, int height)
+void Dx11Renderer::Resize(int Width, int Height)
 {
-    if (swap_chain_ == nullptr || width <= 0 || height <= 0) {
+    if (SwapChain_ == nullptr || Width <= 0 || Height <= 0) {
         return;
     }
 
-    context_->OMSetRenderTargets(0, nullptr, nullptr);
-    release_render_target();
+    Context_->OMSetRenderTargets(0, nullptr, nullptr);
+    ReleaseRenderTarget();
 
-    const HRESULT result = swap_chain_->ResizeBuffers(0, static_cast<UINT>(width), static_cast<UINT>(height), DXGI_FORMAT_UNKNOWN, 0);
+    const HRESULT result = SwapChain_->ResizeBuffers(0, static_cast<UINT>(Width), static_cast<UINT>(Height), DXGI_FORMAT_UNKNOWN, 0);
     if (FAILED(result)) {
         return;
     }
 
-    back_buffer_width_ = width;
-    back_buffer_height_ = height;
-    create_render_target();
-    create_text_pipeline();
+    BackBufferWidth_ = Width;
+    BackBufferHeight_ = Height;
+    CreateRenderTarget();
+    CreateTextPipeline();
 }
 
-void dx11_renderer::render(const draw_data& data)
+void Dx11Renderer::Render(const DrawData& data)
 {
-    if (!valid()) {
+    if (!Valid()) {
         return;
     }
 
-    if (window_->width() != back_buffer_width_ || window_->height() != back_buffer_height_) {
-        resize(window_->width(), window_->height());
+    if (Window_->Width() != BackBufferWidth_ || Window_->Height() != BackBufferHeight_) {
+        Resize(Window_->Width(), Window_->Height());
     }
 
     constexpr float clear_color[] {0.090F, 0.102F, 0.122F, 1.0F};
-    context_->OMSetRenderTargets(1, &render_target_, nullptr);
-    context_->ClearRenderTargetView(render_target_, clear_color);
+    Context_->OMSetRenderTargets(1, &RenderTarget_, nullptr);
+    Context_->ClearRenderTargetView(RenderTarget_, clear_color);
 
-    if (vertex_shader_ == nullptr || pixel_shader_ == nullptr || input_layout_ == nullptr) {
+    if (VertexShader_ == nullptr || PixelShader_ == nullptr || InputLayout_ == nullptr) {
         return;
     }
 
-    std::vector<draw_command> pending_text;
+    std::vector<DrawCommand> pending_text;
     std::vector<vertex> vertices;
     std::vector<std::uint32_t> indices;
     std::vector<render_batch> batches;
 
-    vertices.reserve(data.commands.size() * 4);
-    indices.reserve(data.commands.size() * 6);
+    vertices.reserve(data.Commands.size() * 4);
+    indices.reserve(data.Commands.size() * 6);
 
     auto flush_geometry = [&]() {
         if (vertices.empty() || indices.empty()) {
             return;
         }
 
-        if (!ensure_vertex_capacity(static_cast<UINT>(vertices.size())) || !ensure_index_capacity(static_cast<UINT>(indices.size()))) {
+        if (!EnsureVertexCapacity(static_cast<UINT>(vertices.size())) || !EnsureIndexCapacity(static_cast<UINT>(indices.size()))) {
             vertices.clear();
             indices.clear();
             batches.clear();
@@ -338,47 +338,47 @@ void dx11_renderer::render(const draw_data& data)
         }
 
         D3D11_MAPPED_SUBRESOURCE mapped {};
-        if (FAILED(context_->Map(vertex_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+        if (FAILED(Context_->Map(VertexBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
             vertices.clear();
             indices.clear();
             batches.clear();
             return;
         }
         std::memcpy(mapped.pData, vertices.data(), vertices.size() * sizeof(vertex));
-        context_->Unmap(vertex_buffer_, 0);
+        Context_->Unmap(VertexBuffer_, 0);
 
-        if (FAILED(context_->Map(index_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+        if (FAILED(Context_->Map(IndexBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
             vertices.clear();
             indices.clear();
             batches.clear();
             return;
         }
         std::memcpy(mapped.pData, indices.data(), indices.size() * sizeof(std::uint32_t));
-        context_->Unmap(index_buffer_, 0);
+        Context_->Unmap(IndexBuffer_, 0);
 
         const UINT stride = sizeof(vertex);
         const UINT offset = 0;
-        context_->IASetVertexBuffers(0, 1, &vertex_buffer_, &stride, &offset);
-        context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+        Context_->IASetVertexBuffers(0, 1, &VertexBuffer_, &stride, &offset);
+        Context_->IASetIndexBuffer(IndexBuffer_, DXGI_FORMAT_R32_UINT, 0);
 
         for (const render_batch& batch : batches) {
-            if (batch.index_count == 0) {
+            if (batch.IndexCount == 0) {
                 continue;
             }
 
             D3D11_RECT scissor {
-                static_cast<LONG>((std::max)(0.0F, batch.clip.min.x)),
-                static_cast<LONG>((std::max)(0.0F, batch.clip.min.y)),
-                static_cast<LONG>((std::min)(static_cast<float>(window_->width()), batch.clip.max.x)),
-                static_cast<LONG>((std::min)(static_cast<float>(window_->height()), batch.clip.max.y)),
+                static_cast<LONG>((std::max)(0.0F, batch.Clip.Min.X)),
+                static_cast<LONG>((std::max)(0.0F, batch.Clip.Min.Y)),
+                static_cast<LONG>((std::min)(static_cast<float>(Window_->Width()), batch.Clip.Max.X)),
+                static_cast<LONG>((std::min)(static_cast<float>(Window_->Height()), batch.Clip.Max.Y)),
             };
 
             if (scissor.right <= scissor.left || scissor.bottom <= scissor.top) {
                 continue;
             }
 
-            context_->RSSetScissorRects(1, &scissor);
-            context_->DrawIndexed(batch.index_count, batch.index_start, 0);
+            Context_->RSSetScissorRects(1, &scissor);
+            Context_->DrawIndexed(batch.IndexCount, batch.IndexStart, 0);
         }
 
         vertices.clear();
@@ -391,38 +391,38 @@ void dx11_renderer::render(const draw_data& data)
             return;
         }
 
-        draw_data text_data {};
-        text_data.commands = pending_text;
-        render_text(text_data);
+        DrawData text_data {};
+        text_data.Commands = pending_text;
+        RenderText(text_data);
         pending_text.clear();
     };
 
-    constants constant_data {{static_cast<float>(window_->width()), static_cast<float>(window_->height())}, {0.0F, 0.0F}};
-    context_->UpdateSubresource(constant_buffer_, 0, nullptr, &constant_data, 0, 0);
+    constants constant_data {{static_cast<float>(Window_->Width()), static_cast<float>(Window_->Height())}, {0.0F, 0.0F}};
+    Context_->UpdateSubresource(ConstantBuffer_, 0, nullptr, &constant_data, 0, 0);
 
-    D3D11_VIEWPORT viewport {};
-    viewport.Width = static_cast<float>(window_->width());
-    viewport.Height = static_cast<float>(window_->height());
-    viewport.MinDepth = 0.0F;
-    viewport.MaxDepth = 1.0F;
+    D3D11_VIEWPORT Viewport {};
+    Viewport.Width = static_cast<float>(Window_->Width());
+    Viewport.Height = static_cast<float>(Window_->Height());
+    Viewport.MinDepth = 0.0F;
+    Viewport.MaxDepth = 1.0F;
 
     const float blend_factor[4] {};
-    context_->RSSetViewports(1, &viewport);
-    context_->RSSetState(rasterizer_state_);
-    context_->OMSetBlendState(blend_state_, blend_factor, 0xFFFFFFFF);
-    context_->IASetInputLayout(input_layout_);
-    context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    context_->VSSetShader(vertex_shader_, nullptr, 0);
-    context_->VSSetConstantBuffers(0, 1, &constant_buffer_);
-    context_->PSSetShader(pixel_shader_, nullptr, 0);
+    Context_->RSSetViewports(1, &Viewport);
+    Context_->RSSetState(RasterizerState_);
+    Context_->OMSetBlendState(BlendState_, blend_factor, 0xFFFFFFFF);
+    Context_->IASetInputLayout(InputLayout_);
+    Context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    Context_->VSSetShader(VertexShader_, nullptr, 0);
+    Context_->VSSetConstantBuffers(0, 1, &ConstantBuffer_);
+    Context_->PSSetShader(PixelShader_, nullptr, 0);
 
-    for (const draw_command& command : data.commands) {
-        if (command.type == draw_command_type::text) {
+    for (const DrawCommand& command : data.Commands) {
+        if (command.Type == DrawCommandType::Text) {
             flush_geometry();
             pending_text.push_back(command);
         } else {
             flush_text();
-            append_command_geometry(command, window_->width(), window_->height(), vertices, indices, batches);
+            append_command_geometry(command, Window_->Width(), Window_->Height(), vertices, indices, batches);
         }
     }
 
@@ -430,25 +430,25 @@ void dx11_renderer::render(const draw_data& data)
     flush_text();
 }
 
-void dx11_renderer::present(bool vertical_sync)
+void Dx11Renderer::Present(bool VerticalSync)
 {
-    if (swap_chain_ != nullptr) {
-        swap_chain_->Present(vertical_sync ? 1U : 0U, 0);
+    if (SwapChain_ != nullptr) {
+        SwapChain_->Present(VerticalSync ? 1U : 0U, 0);
     }
 }
 
-bool dx11_renderer::create_device()
+bool Dx11Renderer::CreateDevice()
 {
-    DXGI_SWAP_CHAIN_DESC swap_chain_desc {};
-    swap_chain_desc.BufferCount = 2;
-    swap_chain_desc.BufferDesc.Width = static_cast<UINT>(window_->width());
-    swap_chain_desc.BufferDesc.Height = static_cast<UINT>(window_->height());
-    swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.OutputWindow = window_->native_handle();
-    swap_chain_desc.SampleDesc.Count = 1;
-    swap_chain_desc.Windowed = TRUE;
-    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    DXGI_SWAP_CHAIN_DESC SwapChain_desc {};
+    SwapChain_desc.BufferCount = 2;
+    SwapChain_desc.BufferDesc.Width = static_cast<UINT>(Window_->Width());
+    SwapChain_desc.BufferDesc.Height = static_cast<UINT>(Window_->Height());
+    SwapChain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    SwapChain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    SwapChain_desc.OutputWindow = Window_->NativeHandle();
+    SwapChain_desc.SampleDesc.Count = 1;
+    SwapChain_desc.Windowed = TRUE;
+    SwapChain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
     D3D_FEATURE_LEVEL feature_level {};
     constexpr D3D_FEATURE_LEVEL feature_levels[] {
@@ -466,35 +466,35 @@ bool dx11_renderer::create_device()
         feature_levels,
         static_cast<UINT>(std::size(feature_levels)),
         D3D11_SDK_VERSION,
-        &swap_chain_desc,
-        &swap_chain_,
-        &device_,
+        &SwapChain_desc,
+        &SwapChain_,
+        &Device_,
         &feature_level,
-        &context_);
+        &Context_);
 
     if (SUCCEEDED(result)) {
-        back_buffer_width_ = window_->width();
-        back_buffer_height_ = window_->height();
+        BackBufferWidth_ = Window_->Width();
+        BackBufferHeight_ = Window_->Height();
         return true;
     }
 
     return false;
 }
 
-bool dx11_renderer::create_render_target()
+bool Dx11Renderer::CreateRenderTarget()
 {
     ID3D11Texture2D* back_buffer = nullptr;
-    HRESULT result = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
+    HRESULT result = SwapChain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
     if (FAILED(result)) {
         return false;
     }
 
-    result = device_->CreateRenderTargetView(back_buffer, nullptr, &render_target_);
+    result = Device_->CreateRenderTargetView(back_buffer, nullptr, &RenderTarget_);
     release_if_set(back_buffer);
     return SUCCEEDED(result);
 }
 
-bool dx11_renderer::create_pipeline()
+bool Dx11Renderer::CreatePipeline()
 {
     ID3DBlob* vertex_blob = nullptr;
     ID3DBlob* pixel_blob = nullptr;
@@ -513,26 +513,26 @@ bool dx11_renderer::create_pipeline()
         return false;
     }
 
-    result = device_->CreateVertexShader(vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), nullptr, &vertex_shader_);
+    result = Device_->CreateVertexShader(vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), nullptr, &VertexShader_);
     if (FAILED(result)) {
         release_if_set(vertex_blob);
         release_if_set(pixel_blob);
         return false;
     }
 
-    result = device_->CreatePixelShader(pixel_blob->GetBufferPointer(), pixel_blob->GetBufferSize(), nullptr, &pixel_shader_);
+    result = Device_->CreatePixelShader(pixel_blob->GetBufferPointer(), pixel_blob->GetBufferSize(), nullptr, &PixelShader_);
     if (FAILED(result)) {
         release_if_set(vertex_blob);
         release_if_set(pixel_blob);
         return false;
     }
 
-    constexpr D3D11_INPUT_ELEMENT_DESC input_elements[] {
+    constexpr D3D11_INPUT_ELEMENT_DESC Input_elements[] {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    result = device_->CreateInputLayout(input_elements, static_cast<UINT>(std::size(input_elements)), vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), &input_layout_);
+    result = Device_->CreateInputLayout(Input_elements, static_cast<UINT>(std::size(Input_elements)), vertex_blob->GetBufferPointer(), vertex_blob->GetBufferSize(), &InputLayout_);
     release_if_set(vertex_blob);
     release_if_set(pixel_blob);
     if (FAILED(result)) {
@@ -543,7 +543,7 @@ bool dx11_renderer::create_pipeline()
     constants_desc.ByteWidth = sizeof(constants);
     constants_desc.Usage = D3D11_USAGE_DEFAULT;
     constants_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    result = device_->CreateBuffer(&constants_desc, nullptr, &constant_buffer_);
+    result = Device_->CreateBuffer(&constants_desc, nullptr, &ConstantBuffer_);
     if (FAILED(result)) {
         return false;
     }
@@ -557,7 +557,7 @@ bool dx11_renderer::create_pipeline()
     blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
     blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    result = device_->CreateBlendState(&blend_desc, &blend_state_);
+    result = Device_->CreateBlendState(&blend_desc, &BlendState_);
     if (FAILED(result)) {
         return false;
     }
@@ -567,30 +567,30 @@ bool dx11_renderer::create_pipeline()
     rasterizer_desc.CullMode = D3D11_CULL_NONE;
     rasterizer_desc.ScissorEnable = TRUE;
     rasterizer_desc.DepthClipEnable = TRUE;
-    result = device_->CreateRasterizerState(&rasterizer_desc, &rasterizer_state_);
+    result = Device_->CreateRasterizerState(&rasterizer_desc, &RasterizerState_);
     return SUCCEEDED(result);
 }
 
-bool dx11_renderer::create_text_pipeline()
+bool Dx11Renderer::CreateTextPipeline()
 {
-    release_if_set(d2d_render_target_);
+    release_if_set(D2DRenderTarget_);
 
-    if (d2d_factory_ == nullptr) {
-        HRESULT result = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2d_factory_);
+    if (D2DFactory_ == nullptr) {
+        HRESULT result = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &D2DFactory_);
         if (FAILED(result)) {
             return false;
         }
     }
 
-    if (dwrite_factory_ == nullptr) {
-        HRESULT result = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&dwrite_factory_));
+    if (DWriteFactory_ == nullptr) {
+        HRESULT result = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&DWriteFactory_));
         if (FAILED(result)) {
             return false;
         }
     }
 
     IDXGISurface* surface = nullptr;
-    HRESULT result = swap_chain_->GetBuffer(0, __uuidof(IDXGISurface), reinterpret_cast<void**>(&surface));
+    HRESULT result = SwapChain_->GetBuffer(0, __uuidof(IDXGISurface), reinterpret_cast<void**>(&surface));
     if (FAILED(result)) {
         return false;
     }
@@ -599,64 +599,64 @@ bool dx11_renderer::create_text_pipeline()
         D2D1_RENDER_TARGET_TYPE_DEFAULT,
         D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED));
 
-    result = d2d_factory_->CreateDxgiSurfaceRenderTarget(surface, &properties, &d2d_render_target_);
+    result = D2DFactory_->CreateDxgiSurfaceRenderTarget(surface, &properties, &D2DRenderTarget_);
     release_if_set(surface);
     return SUCCEEDED(result);
 }
 
-bool dx11_renderer::ensure_vertex_capacity(UINT capacity)
+bool Dx11Renderer::EnsureVertexCapacity(UINT capacity)
 {
-    if (vertex_buffer_ != nullptr && vertex_capacity_ >= capacity) {
+    if (VertexBuffer_ != nullptr && VertexCapacity_ >= capacity) {
         return true;
     }
 
-    release_if_set(vertex_buffer_);
-    vertex_capacity_ = std::max<UINT>(capacity, vertex_capacity_ == 0 ? 1024 : vertex_capacity_ * 2);
+    release_if_set(VertexBuffer_);
+    VertexCapacity_ = std::max<UINT>(capacity, VertexCapacity_ == 0 ? 1024 : VertexCapacity_ * 2);
 
     D3D11_BUFFER_DESC desc {};
-    desc.ByteWidth = vertex_capacity_ * sizeof(vertex);
+    desc.ByteWidth = VertexCapacity_ * sizeof(vertex);
     desc.Usage = D3D11_USAGE_DYNAMIC;
     desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    return SUCCEEDED(device_->CreateBuffer(&desc, nullptr, &vertex_buffer_));
+    return SUCCEEDED(Device_->CreateBuffer(&desc, nullptr, &VertexBuffer_));
 }
 
-bool dx11_renderer::ensure_index_capacity(UINT capacity)
+bool Dx11Renderer::EnsureIndexCapacity(UINT capacity)
 {
-    if (index_buffer_ != nullptr && index_capacity_ >= capacity) {
+    if (IndexBuffer_ != nullptr && IndexCapacity_ >= capacity) {
         return true;
     }
 
-    release_if_set(index_buffer_);
-    index_capacity_ = std::max<UINT>(capacity, index_capacity_ == 0 ? 2048 : index_capacity_ * 2);
+    release_if_set(IndexBuffer_);
+    IndexCapacity_ = std::max<UINT>(capacity, IndexCapacity_ == 0 ? 2048 : IndexCapacity_ * 2);
 
     D3D11_BUFFER_DESC desc {};
-    desc.ByteWidth = index_capacity_ * sizeof(std::uint32_t);
+    desc.ByteWidth = IndexCapacity_ * sizeof(std::uint32_t);
     desc.Usage = D3D11_USAGE_DYNAMIC;
     desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    return SUCCEEDED(device_->CreateBuffer(&desc, nullptr, &index_buffer_));
+    return SUCCEEDED(Device_->CreateBuffer(&desc, nullptr, &IndexBuffer_));
 }
 
-IDWriteTextFormat* dx11_renderer::text_format(const draw_command& command)
+IDWriteTextFormat* Dx11Renderer::TextFormat(const DrawCommand& command)
 {
-    const std::wstring family = command.font_family.empty() ? L"Inter" : command.font_family;
-    const float size = command.font_size;
+    const std::wstring family = command.FontFamily.empty() ? L"Inter" : command.FontFamily;
+    const float size = command.FontSize;
 
-    for (const text_format_cache_entry& entry : text_format_cache_) {
+    for (const TextFormatCacheEntry& entry : TextFormatCache_) {
         if (entry.family == family && entry.size == size) {
             return entry.format;
         }
     }
 
     IDWriteTextFormat* format = nullptr;
-    if (dwrite_factory_ == nullptr) {
+    if (DWriteFactory_ == nullptr) {
         return nullptr;
     }
 
-    HRESULT result = dwrite_factory_->CreateTextFormat(
+    HRESULT result = DWriteFactory_->CreateTextFormat(
         family.c_str(),
         nullptr,
         DWRITE_FONT_WEIGHT_NORMAL,
@@ -674,7 +674,7 @@ IDWriteTextFormat* dx11_renderer::text_format(const draw_command& command)
     format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
     format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
 
-    text_format_cache_.push_back({
+    TextFormatCache_.push_back({
         .family = family,
         .size = size,
         .format = format,
@@ -683,15 +683,15 @@ IDWriteTextFormat* dx11_renderer::text_format(const draw_command& command)
     return format;
 }
 
-void dx11_renderer::render_text(const draw_data& data)
+void Dx11Renderer::RenderText(const DrawData& data)
 {
-    if (d2d_render_target_ == nullptr || dwrite_factory_ == nullptr) {
+    if (D2DRenderTarget_ == nullptr || DWriteFactory_ == nullptr) {
         return;
     }
 
     bool has_text = false;
-    for (const draw_command& command : data.commands) {
-        if (command.type == draw_command_type::text && !command.text.empty()) {
+    for (const DrawCommand& command : data.Commands) {
+        if (command.Type == DrawCommandType::Text && !command.Text.empty()) {
             has_text = true;
             break;
         }
@@ -702,80 +702,80 @@ void dx11_renderer::render_text(const draw_data& data)
     }
 
     ID3D11RenderTargetView* null_render_target = nullptr;
-    context_->OMSetRenderTargets(1, &null_render_target, nullptr);
-    context_->Flush();
+    Context_->OMSetRenderTargets(1, &null_render_target, nullptr);
+    Context_->Flush();
 
-    d2d_render_target_->BeginDraw();
+    D2DRenderTarget_->BeginDraw();
 
-    for (const draw_command& command : data.commands) {
-        if (command.type != draw_command_type::text || command.text.empty()) {
+    for (const DrawCommand& command : data.Commands) {
+        if (command.Type != DrawCommandType::Text || command.Text.empty()) {
             continue;
         }
 
-        IDWriteTextFormat* format = text_format(command);
+        IDWriteTextFormat* format = TextFormat(command);
         if (format == nullptr) {
             continue;
         }
 
         ID2D1SolidColorBrush* brush = nullptr;
-        HRESULT result = d2d_render_target_->CreateSolidColorBrush(to_d2d(command.tint), &brush);
+        HRESULT result = D2DRenderTarget_->CreateSolidColorBrush(to_d2d(command.Tint), &brush);
         if (FAILED(result)) {
             continue;
         }
 
-        const rect clip_rect = effective_clip(command.clip, window_->width(), window_->height());
-        const rect clipped_bounds = clipped(command.bounds, clip_rect);
-        if (clipped_bounds.max.x <= clipped_bounds.min.x || clipped_bounds.max.y <= clipped_bounds.min.y) {
+        const Rect clip_rect = effective_clip(command.Clip, Window_->Width(), Window_->Height());
+        const Rect clipped_bounds = clipped(command.Bounds, clip_rect);
+        if (clipped_bounds.Max.X <= clipped_bounds.Min.X || clipped_bounds.Max.Y <= clipped_bounds.Min.Y) {
             release_if_set(brush);
             continue;
         }
 
-        const std::wstring text = widen(command.text);
-        const D2D1_RECT_F clip = D2D1::RectF(clip_rect.min.x, clip_rect.min.y, clip_rect.max.x, clip_rect.max.y);
-        const D2D1_RECT_F bounds = D2D1::RectF(command.bounds.min.x, command.bounds.min.y, command.bounds.max.x, command.bounds.max.y);
-        d2d_render_target_->PushAxisAlignedClip(clip, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-        d2d_render_target_->DrawText(text.c_str(), static_cast<UINT32>(text.size()), format, bounds, brush);
-        d2d_render_target_->PopAxisAlignedClip();
+        const std::wstring Text = widen(command.Text);
+        const D2D1_RECT_F clip = D2D1::RectF(clip_rect.Min.X, clip_rect.Min.Y, clip_rect.Max.X, clip_rect.Max.Y);
+        const D2D1_RECT_F bounds = D2D1::RectF(command.Bounds.Min.X, command.Bounds.Min.Y, command.Bounds.Max.X, command.Bounds.Max.Y);
+        D2DRenderTarget_->PushAxisAlignedClip(clip, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+        D2DRenderTarget_->DrawText(Text.c_str(), static_cast<UINT32>(Text.size()), format, bounds, brush);
+        D2DRenderTarget_->PopAxisAlignedClip();
 
         release_if_set(brush);
     }
 
-    const HRESULT end_result = d2d_render_target_->EndDraw();
-    context_->OMSetRenderTargets(1, &render_target_, nullptr);
+    const HRESULT end_result = D2DRenderTarget_->EndDraw();
+    Context_->OMSetRenderTargets(1, &RenderTarget_, nullptr);
 
     if (end_result == D2DERR_RECREATE_TARGET) {
-        release_if_set(d2d_render_target_);
-        create_text_pipeline();
+        release_if_set(D2DRenderTarget_);
+        CreateTextPipeline();
     }
 }
 
-void dx11_renderer::release_render_target()
+void Dx11Renderer::ReleaseRenderTarget()
 {
-    release_if_set(d2d_render_target_);
-    release_if_set(render_target_);
+    release_if_set(D2DRenderTarget_);
+    release_if_set(RenderTarget_);
 }
 
-void dx11_renderer::release()
+void Dx11Renderer::Release()
 {
-    for (text_format_cache_entry& entry : text_format_cache_) {
+    for (TextFormatCacheEntry& entry : TextFormatCache_) {
         release_if_set(entry.format);
     }
-    text_format_cache_.clear();
+    TextFormatCache_.clear();
 
-    release_if_set(rasterizer_state_);
-    release_if_set(blend_state_);
-    release_if_set(constant_buffer_);
-    release_if_set(index_buffer_);
-    release_if_set(vertex_buffer_);
-    release_if_set(input_layout_);
-    release_if_set(pixel_shader_);
-    release_if_set(vertex_shader_);
-    release_render_target();
-    release_if_set(dwrite_factory_);
-    release_if_set(d2d_factory_);
-    release_if_set(swap_chain_);
-    release_if_set(context_);
-    release_if_set(device_);
+    release_if_set(RasterizerState_);
+    release_if_set(BlendState_);
+    release_if_set(ConstantBuffer_);
+    release_if_set(IndexBuffer_);
+    release_if_set(VertexBuffer_);
+    release_if_set(InputLayout_);
+    release_if_set(PixelShader_);
+    release_if_set(VertexShader_);
+    ReleaseRenderTarget();
+    release_if_set(DWriteFactory_);
+    release_if_set(D2DFactory_);
+    release_if_set(SwapChain_);
+    release_if_set(Context_);
+    release_if_set(Device_);
 }
 
 }

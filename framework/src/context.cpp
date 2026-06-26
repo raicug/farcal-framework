@@ -18,21 +18,21 @@ namespace farcal {
 namespace {
 
 struct context {
-    input_state input {};
-    draw_data background_draw {};
-    draw_data main_draw {};
-    draw_data foreground_draw {};
-    draw_data combined_draw {};
-    style theme {};
-    std::vector<std::pair<style_color, color>> color_stack {};
-    std::vector<std::pair<style_var, float>> var_stack {};
+    InputState Input {};
+    DrawData background_draw {};
+    DrawData main_draw {};
+    DrawData foreground_draw {};
+    DrawData combined_draw {};
+    Style theme {};
+    std::vector<std::pair<StyleColor, Color>> color_stack {};
+    std::vector<std::pair<StyleVar, float>> var_stack {};
     std::vector<std::uint64_t> id_stack {};
-    statistics stats {};
+    Statistics Stats {};
     std::chrono::steady_clock::time_point last_begin {};
     std::chrono::steady_clock::time_point current_begin {};
-    float max_fps {};
+    float MaxFps {};
     bool timer_period_enabled {};
-    std::uint64_t frame_index {};
+    std::uint64_t FrameIndex {};
     bool in_frame {};
 };
 
@@ -46,76 +46,76 @@ context& require_context()
     return *current;
 }
 
-color& color_ref(style& theme, style_color variable)
+Color& color_ref(Style& theme, StyleColor variable)
 {
     switch (variable) {
-    case style_color::text:
-        return theme.text;
-    case style_color::text_secondary:
-        return theme.text_secondary;
-    case style_color::text_muted:
-        return theme.text_muted;
-    case style_color::button:
-        return theme.button;
-    case style_color::button_hovered:
-        return theme.button_hovered;
-    case style_color::button_active:
-        return theme.button_active;
-    case style_color::button_primary:
-        return theme.button_primary;
-    case style_color::button_primary_hovered:
-        return theme.button_primary_hovered;
-    case style_color::button_primary_active:
-        return theme.button_primary_active;
-    case style_color::button_border:
-        return theme.button_border;
-    case style_color::window_background:
-        return theme.window_background;
-    case style_color::window_panel:
-        return theme.window_panel;
-    case style_color::window_border:
-        return theme.window_border;
-    case style_color::window_title:
-        return theme.window_title;
-    case style_color::window_title_active:
-        return theme.window_title_active;
-    case style_color::accent:
-        return theme.accent;
-    case style_color::selection:
-        return theme.selection;
+    case StyleColor::Text:
+        return theme.Text;
+    case StyleColor::TextSecondary:
+        return theme.TextSecondary;
+    case StyleColor::TextMuted:
+        return theme.TextMuted;
+    case StyleColor::Button:
+        return theme.Button;
+    case StyleColor::ButtonHovered:
+        return theme.ButtonHovered;
+    case StyleColor::ButtonActive:
+        return theme.ButtonActive;
+    case StyleColor::ButtonPrimary:
+        return theme.ButtonPrimary;
+    case StyleColor::ButtonPrimaryHovered:
+        return theme.ButtonPrimaryHovered;
+    case StyleColor::ButtonPrimaryActive:
+        return theme.ButtonPrimaryActive;
+    case StyleColor::ButtonBorder:
+        return theme.ButtonBorder;
+    case StyleColor::WindowBackground:
+        return theme.WindowBackground;
+    case StyleColor::WindowPanel:
+        return theme.WindowPanel;
+    case StyleColor::WindowBorder:
+        return theme.WindowBorder;
+    case StyleColor::WindowTitle:
+        return theme.WindowTitle;
+    case StyleColor::WindowTitleActive:
+        return theme.WindowTitleActive;
+    case StyleColor::Accent:
+        return theme.Accent;
+    case StyleColor::Selection:
+        return theme.Selection;
     }
 
-    return theme.text;
+    return theme.Text;
 }
 
-float& var_ref(style& theme, style_var variable)
+float& var_ref(Style& theme, StyleVar variable)
 {
     switch (variable) {
-    case style_var::font_size:
-        return theme.font_size;
-    case style_var::frame_scale:
-        return theme.frame_scale;
-    case style_var::frame_padding_x:
-        return theme.frame_padding_x;
-    case style_var::frame_padding_y:
-        return theme.frame_padding_y;
-    case style_var::item_spacing_y:
-        return theme.item_spacing_y;
-    case style_var::item_width:
-        return theme.item_width;
-    case style_var::window_width:
-        return theme.window_width;
-    case style_var::window_height:
-        return theme.window_height;
-    case style_var::window_title_height:
-        return theme.window_title_height;
-    case style_var::section_spacing_y:
-        return theme.section_spacing_y;
-    case style_var::anti_aliasing:
-        return theme.anti_aliasing;
+    case StyleVar::FontSize:
+        return theme.FontSize;
+    case StyleVar::FrameScale:
+        return theme.FrameScale;
+    case StyleVar::FramePaddingX:
+        return theme.FramePaddingX;
+    case StyleVar::FramePaddingY:
+        return theme.FramePaddingY;
+    case StyleVar::ItemSpacingY:
+        return theme.ItemSpacingY;
+    case StyleVar::ItemWidth:
+        return theme.ItemWidth;
+    case StyleVar::WindowWidth:
+        return theme.WindowWidth;
+    case StyleVar::WindowHeight:
+        return theme.WindowHeight;
+    case StyleVar::WindowTitleHeight:
+        return theme.WindowTitleHeight;
+    case StyleVar::SectionSpacingY:
+        return theme.SectionSpacingY;
+    case StyleVar::AntiAliasing:
+        return theme.AntiAliasing;
     }
 
-    return theme.font_size;
+    return theme.FontSize;
 }
 
 std::uint64_t hash_bytes(std::uint64_t seed, const void* data, std::size_t size)
@@ -136,20 +136,20 @@ std::uint64_t current_seed(const context& ctx)
     return ctx.id_stack.empty() ? 14695981039346656037ULL : ctx.id_stack.back();
 }
 
-void update_memory_statistics(statistics& stats)
+void update_memory_statistics(Statistics& Stats)
 {
     PROCESS_MEMORY_COUNTERS_EX counters {};
     counters.cb = sizeof(counters);
 
     if (GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters))) {
-        stats.memory_working_set = counters.WorkingSetSize;
-        stats.memory_private = counters.PrivateUsage;
+        Stats.MemoryWorkingSet = counters.WorkingSetSize;
+        Stats.MemoryPrivate = counters.PrivateUsage;
     }
 }
 
 }
 
-void create_context(const context_config&)
+void CreateContext(const ContextConfig&)
 {
     current = std::make_unique<context>();
     if (timeBeginPeriod(1) == TIMERR_NOERROR) {
@@ -157,7 +157,7 @@ void create_context(const context_config&)
     }
 }
 
-void destroy_context()
+void DestroyContext()
 {
     if (current && current->timer_period_enabled) {
         timeEndPeriod(1);
@@ -166,70 +166,70 @@ void destroy_context()
     current.reset();
 }
 
-bool has_context()
+bool HasContext()
 {
     return current != nullptr;
 }
 
-void begin_frame(const input_state& input)
+void BeginFrame(const InputState& Input)
 {
     context& ctx = require_context();
     const auto now = std::chrono::steady_clock::now();
     ctx.current_begin = now;
 
     if (ctx.last_begin.time_since_epoch().count() != 0) {
-        ctx.stats.delta_seconds = std::chrono::duration<double>(now - ctx.last_begin).count();
-        if (ctx.stats.delta_seconds > 0.0) {
-            ctx.stats.frames_per_second = 1.0 / ctx.stats.delta_seconds;
+        ctx.Stats.DeltaSeconds = std::chrono::duration<double>(now - ctx.last_begin).count();
+        if (ctx.Stats.DeltaSeconds > 0.0) {
+            ctx.Stats.FramesPerSecond = 1.0 / ctx.Stats.DeltaSeconds;
         }
     }
 
     ctx.last_begin = now;
-    ctx.input = input;
-    ctx.background_draw.commands.clear();
-    ctx.main_draw.commands.clear();
-    ctx.foreground_draw.commands.clear();
-    ctx.combined_draw.commands.clear();
+    ctx.Input = Input;
+    ctx.background_draw.Commands.clear();
+    ctx.main_draw.Commands.clear();
+    ctx.foreground_draw.Commands.clear();
+    ctx.combined_draw.Commands.clear();
     ctx.in_frame = true;
 }
 
-void end_frame()
+void EndFrame()
 {
     context& ctx = require_context();
-    ctx.combined_draw.commands.clear();
-    ctx.combined_draw.commands.reserve(ctx.background_draw.commands.size() + ctx.main_draw.commands.size() + ctx.foreground_draw.commands.size());
-    ctx.combined_draw.commands.insert(ctx.combined_draw.commands.end(), ctx.background_draw.commands.begin(), ctx.background_draw.commands.end());
-    ctx.combined_draw.commands.insert(ctx.combined_draw.commands.end(), ctx.main_draw.commands.begin(), ctx.main_draw.commands.end());
-    ctx.combined_draw.commands.insert(ctx.combined_draw.commands.end(), ctx.foreground_draw.commands.begin(), ctx.foreground_draw.commands.end());
-    ctx.stats.frame_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - ctx.current_begin).count();
-    ctx.stats.frame_index = ctx.frame_index;
-    ctx.stats.background_command_count = ctx.background_draw.commands.size();
-    ctx.stats.main_command_count = ctx.main_draw.commands.size();
-    ctx.stats.foreground_command_count = ctx.foreground_draw.commands.size();
-    ctx.stats.draw_command_count = ctx.combined_draw.commands.size();
-    update_memory_statistics(ctx.stats);
+    ctx.combined_draw.Commands.clear();
+    ctx.combined_draw.Commands.reserve(ctx.background_draw.Commands.size() + ctx.main_draw.Commands.size() + ctx.foreground_draw.Commands.size());
+    ctx.combined_draw.Commands.insert(ctx.combined_draw.Commands.end(), ctx.background_draw.Commands.begin(), ctx.background_draw.Commands.end());
+    ctx.combined_draw.Commands.insert(ctx.combined_draw.Commands.end(), ctx.main_draw.Commands.begin(), ctx.main_draw.Commands.end());
+    ctx.combined_draw.Commands.insert(ctx.combined_draw.Commands.end(), ctx.foreground_draw.Commands.begin(), ctx.foreground_draw.Commands.end());
+    ctx.Stats.FrameSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - ctx.current_begin).count();
+    ctx.Stats.FrameIndex = ctx.FrameIndex;
+    ctx.Stats.BackgroundCommandCount = ctx.background_draw.Commands.size();
+    ctx.Stats.MainCommandCount = ctx.main_draw.Commands.size();
+    ctx.Stats.ForegroundCommandCount = ctx.foreground_draw.Commands.size();
+    ctx.Stats.DrawCommandCount = ctx.combined_draw.Commands.size();
+    update_memory_statistics(ctx.Stats);
     ctx.in_frame = false;
-    ++ctx.frame_index;
+    ++ctx.FrameIndex;
 }
 
-void set_max_fps(float value)
+void SetMaxFps(float value)
 {
-    require_context().max_fps = (std::max)(0.0F, value);
+    require_context().MaxFps = (std::max)(0.0F, value);
 }
 
-float max_fps()
+float MaxFps()
 {
-    return require_context().max_fps;
+    return require_context().MaxFps;
 }
 
-void limit_frame_rate()
+void LimitFrameRate()
 {
     const context& ctx = require_context();
-    if (ctx.max_fps <= 0.0F) {
+    if (ctx.MaxFps <= 0.0F) {
         return;
     }
 
-    const auto target = std::chrono::duration<double>(1.0 / static_cast<double>(ctx.max_fps));
+    const auto target = std::chrono::duration<double>(1.0 / static_cast<double>(ctx.MaxFps));
     const auto target_time = ctx.current_begin + std::chrono::duration_cast<std::chrono::steady_clock::duration>(target);
     constexpr auto spin_margin = std::chrono::microseconds(750);
 
@@ -248,37 +248,37 @@ void limit_frame_rate()
     }
 }
 
-const input_state& input()
+const InputState& Input()
 {
-    return require_context().input;
+    return require_context().Input;
 }
 
-const draw_data& draw()
+const DrawData& Draw()
 {
     return require_context().combined_draw;
 }
 
-const statistics& stats()
+const Statistics& Stats()
 {
-    return require_context().stats;
+    return require_context().Stats;
 }
 
-draw_data& background_renderer()
+DrawData& BackgroundRenderer()
 {
     return require_context().background_draw;
 }
 
-draw_data& foreground_renderer()
+DrawData& ForegroundRenderer()
 {
     return require_context().foreground_draw;
 }
 
-draw_data& main_renderer()
+DrawData& MainRenderer()
 {
     return require_context().main_draw;
 }
 
-void push_id(std::string_view value)
+void PushId(std::string_view value)
 {
     context& ctx = require_context();
     const std::uint64_t seed = current_seed(ctx);
@@ -286,7 +286,7 @@ void push_id(std::string_view value)
     ctx.id_stack.push_back(id);
 }
 
-void push_id(const void* value)
+void PushId(const void* value)
 {
     context& ctx = require_context();
     const std::uint64_t seed = current_seed(ctx);
@@ -295,7 +295,7 @@ void push_id(const void* value)
     ctx.id_stack.push_back(id);
 }
 
-void pop_id()
+void PopId()
 {
     context& ctx = require_context();
     if (ctx.id_stack.empty()) {
@@ -305,41 +305,41 @@ void pop_id()
     ctx.id_stack.pop_back();
 }
 
-std::uint64_t current_id(std::string_view value)
+std::uint64_t CurrentId(std::string_view value)
 {
     const context& ctx = require_context();
     const std::uint64_t seed = current_seed(ctx);
     return hash_bytes(seed, value.data(), value.size());
 }
 
-std::uint64_t frame_index()
+std::uint64_t FrameIndex()
 {
-    return require_context().frame_index;
+    return require_context().FrameIndex;
 }
 
-const style& current_style()
+const Style& CurrentStyle()
 {
     return require_context().theme;
 }
 
-void set_style(const style& value)
+void SetStyle(const Style& value)
 {
     require_context().theme = value;
 }
 
-void push_style_color(style_color variable, color value)
+void PushStyleColor(StyleColor variable, Color value)
 {
     context& ctx = require_context();
-    color& target = color_ref(ctx.theme, variable);
+    Color& target = color_ref(ctx.theme, variable);
     ctx.color_stack.push_back({variable, target});
     target = value;
 }
 
-void pop_style_color()
+void PopStyleColor()
 {
     context& ctx = require_context();
     if (ctx.color_stack.empty()) {
-        throw std::logic_error("farcal style color stack is empty");
+        throw std::logic_error("farcal Style Color stack is empty");
     }
 
     const auto [variable, value] = ctx.color_stack.back();
@@ -347,7 +347,7 @@ void pop_style_color()
     ctx.color_stack.pop_back();
 }
 
-void push_style_var(style_var variable, float value)
+void PushStyleVar(StyleVar variable, float value)
 {
     context& ctx = require_context();
     float& target = var_ref(ctx.theme, variable);
@@ -355,11 +355,11 @@ void push_style_var(style_var variable, float value)
     target = value;
 }
 
-void pop_style_var()
+void PopStyleVar()
 {
     context& ctx = require_context();
     if (ctx.var_stack.empty()) {
-        throw std::logic_error("farcal style var stack is empty");
+        throw std::logic_error("farcal Style var stack is empty");
     }
 
     const auto [variable, value] = ctx.var_stack.back();

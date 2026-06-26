@@ -13,6 +13,6 @@
 
 namespace farcal {
 
-const char* version();
+const char* Version();
 
 }

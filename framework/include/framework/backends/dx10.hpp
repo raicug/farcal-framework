@@ -15,59 +15,59 @@
 
 namespace farcal {
 
-class dx10_renderer {
+class Dx10Renderer {
 public:
-    explicit dx10_renderer(window& target);
-    dx10_renderer(const dx10_renderer&) = delete;
-    dx10_renderer& operator=(const dx10_renderer&) = delete;
-    dx10_renderer(dx10_renderer&&) = delete;
-    dx10_renderer& operator=(dx10_renderer&&) = delete;
-    ~dx10_renderer();
+    explicit Dx10Renderer(Window& target);
+    Dx10Renderer(const Dx10Renderer&) = delete;
+    Dx10Renderer& operator=(const Dx10Renderer&) = delete;
+    Dx10Renderer(Dx10Renderer&&) = delete;
+    Dx10Renderer& operator=(Dx10Renderer&&) = delete;
+    ~Dx10Renderer();
 
-    bool valid() const;
-    void resize(int width, int height);
-    void render(const draw_data& data);
-    void present(bool vertical_sync = true);
+    bool Valid() const;
+    void Resize(int Width, int Height);
+    void Render(const DrawData& data);
+    void Present(bool VerticalSync = true);
 
 private:
-    window* window_ {};
-    ID3D10Device1* device_ {};
-    IDXGISwapChain* swap_chain_ {};
-    ID3D10RenderTargetView* render_target_ {};
-    ID3D10VertexShader* vertex_shader_ {};
-    ID3D10PixelShader* pixel_shader_ {};
-    ID3D10InputLayout* input_layout_ {};
-    ID3D10Buffer* vertex_buffer_ {};
-    ID3D10Buffer* index_buffer_ {};
-    ID3D10Buffer* constant_buffer_ {};
-    ID3D10BlendState* blend_state_ {};
-    ID3D10RasterizerState* rasterizer_state_ {};
-    ID2D1Factory* d2d_factory_ {};
-    IDWriteFactory* dwrite_factory_ {};
-    ID2D1RenderTarget* d2d_render_target_ {};
-    UINT vertex_capacity_ {};
-    UINT index_capacity_ {};
-    int back_buffer_width_ {};
-    int back_buffer_height_ {};
+    Window* Window_ {};
+    ID3D10Device1* Device_ {};
+    IDXGISwapChain* SwapChain_ {};
+    ID3D10RenderTargetView* RenderTarget_ {};
+    ID3D10VertexShader* VertexShader_ {};
+    ID3D10PixelShader* PixelShader_ {};
+    ID3D10InputLayout* InputLayout_ {};
+    ID3D10Buffer* VertexBuffer_ {};
+    ID3D10Buffer* IndexBuffer_ {};
+    ID3D10Buffer* ConstantBuffer_ {};
+    ID3D10BlendState* BlendState_ {};
+    ID3D10RasterizerState* RasterizerState_ {};
+    ID2D1Factory* D2DFactory_ {};
+    IDWriteFactory* DWriteFactory_ {};
+    ID2D1RenderTarget* D2DRenderTarget_ {};
+    UINT VertexCapacity_ {};
+    UINT IndexCapacity_ {};
+    int BackBufferWidth_ {};
+    int BackBufferHeight_ {};
 
-    struct text_format_cache_entry {
+    struct TextFormatCacheEntry {
         std::wstring family {};
         float size {};
         IDWriteTextFormat* format {};
     };
 
-    std::vector<text_format_cache_entry> text_format_cache_ {};
+    std::vector<TextFormatCacheEntry> TextFormatCache_ {};
 
-    bool create_device();
-    bool create_render_target();
-    bool create_pipeline();
-    bool create_text_pipeline();
-    bool ensure_vertex_capacity(UINT capacity);
-    bool ensure_index_capacity(UINT capacity);
-    IDWriteTextFormat* text_format(const draw_command& command);
-    void render_text(const draw_data& data);
-    void release_render_target();
-    void release();
+    bool CreateDevice();
+    bool CreateRenderTarget();
+    bool CreatePipeline();
+    bool CreateTextPipeline();
+    bool EnsureVertexCapacity(UINT capacity);
+    bool EnsureIndexCapacity(UINT capacity);
+    IDWriteTextFormat* TextFormat(const DrawCommand& command);
+    void RenderText(const DrawData& data);
+    void ReleaseRenderTarget();
+    void Release();
 };
 
 }

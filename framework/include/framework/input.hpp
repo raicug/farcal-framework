@@ -8,19 +8,19 @@
 
 namespace farcal {
 
-struct input_state {
-    vec2 mouse_position {};
-    vec2 mouse_delta {};
-    float mouse_wheel {};
-    std::array<bool, 5> mouse_down {};
-    std::array<bool, 5> mouse_pressed {};
-    std::array<bool, 5> mouse_released {};
-    std::array<bool, 256> key_down {};
-    std::array<bool, 256> key_pressed {};
-    std::array<bool, 256> key_released {};
-    bool shift {};
-    bool control {};
-    bool alt {};
+struct InputState {
+    Vec2 MousePosition {};
+    Vec2 MouseDelta {};
+    float MouseWheel {};
+    std::array<bool, 5> MouseDown {};
+    std::array<bool, 5> MousePressed {};
+    std::array<bool, 5> MouseReleased {};
+    std::array<bool, 256> KeyDown {};
+    std::array<bool, 256> KeyPressed {};
+    std::array<bool, 256> KeyReleased {};
+    bool Shift {};
+    bool Control {};
+    bool Alt {};
 };
 
 }
