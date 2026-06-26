@@ -430,10 +430,10 @@ void dx10_renderer::render(const draw_data& data)
     flush_text();
 }
 
-void dx10_renderer::present()
+void dx10_renderer::present(bool vertical_sync)
 {
     if (swap_chain_ != nullptr) {
-        swap_chain_->Present(1, 0);
+        swap_chain_->Present(vertical_sync ? 1U : 0U, 0);
     }
 }
 

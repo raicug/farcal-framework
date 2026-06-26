@@ -4,6 +4,7 @@
 #include <framework/context.hpp>
 
 #include <algorithm>
+#include <cstdio>
 #include <functional>
 #include <stdexcept>
 #include <string>
@@ -203,6 +204,31 @@ bool keyboard_toggle(std::uint64_t id)
 {
     const input_state& io = input();
     return focused_item == id && (io.key_pressed[13] || io.key_pressed[32]);
+}
+
+float normalized_value(float value, float minimum, float maximum)
+{
+    if (maximum <= minimum) {
+        return 0.0F;
+    }
+
+    return std::clamp((value - minimum) / (maximum - minimum), 0.0F, 1.0F);
+}
+
+float value_from_normalized(float value, float minimum, float maximum)
+{
+    return minimum + (maximum - minimum) * std::clamp(value, 0.0F, 1.0F);
+}
+
+bool set_float_value(float* target, float value, float minimum, float maximum)
+{
+    const float clamped = std::clamp(value, minimum, maximum);
+    if (*target == clamped) {
+        return false;
+    }
+
+    *target = clamped;
+    return true;
 }
 
 void add_text(rect bounds, std::string_view value, color tint)
@@ -527,6 +553,71 @@ bool checkbox(std::string_view label, bool* value)
 
     const color text_color = *value ? theme.text : theme.text_secondary;
     add_text({{box.max.x + gap, bounds.min.y + 2.0F * scale}, bounds.max}, label, text_color);
+
+    return changed;
+}
+
+bool slider_float(std::string_view label, float* value, float minimum, float maximum)
+{
+    ensure_layout();
+    if (value == nullptr) {
+        return false;
+    }
+
+    if (maximum < minimum) {
+        std::swap(minimum, maximum);
+    }
+
+    const style& theme = current_style();
+    const input_state& io = input();
+    const float scale = theme.frame_scale;
+    const float height = 42.0F * scale;
+    const float width = layout.content_width > 0.0F ? layout.content_width : theme.item_width * scale;
+    const rect bounds = next_rect(width, height);
+    const std::uint64_t id = current_id(label);
+    const item_result item = item_behavior(id, bounds);
+    bool changed = false;
+
+    const float track_y = bounds.min.y + 30.0F * scale;
+    const float track_start = bounds.min.x;
+    const float track_end = bounds.max.x;
+    const float track_width = std::max(1.0F, track_end - track_start);
+
+    if ((item.active && io.mouse_down[0]) || item.clicked) {
+        const float normalized = (io.mouse_position.x - track_start) / track_width;
+        changed = set_float_value(value, value_from_normalized(normalized, minimum, maximum), minimum, maximum);
+    }
+
+    if (item.focused) {
+        const float step = (maximum - minimum) / 100.0F;
+        if (io.key_pressed[37]) {
+            changed = set_float_value(value, *value - step, minimum, maximum) || changed;
+        }
+        if (io.key_pressed[39]) {
+            changed = set_float_value(value, *value + step, minimum, maximum) || changed;
+        }
+    }
+
+    const float normalized = normalized_value(*value, minimum, maximum);
+    const float thumb_x = track_start + track_width * normalized;
+    const color track_color = item.hovered || item.active ? theme.button_hovered : theme.button;
+    const color progress_color = item.active ? theme.button_primary_active : item.hovered ? theme.button_primary_hovered : theme.button_primary;
+    const color thumb_fill = item.active ? theme.selection : theme.window_panel;
+    const color thumb_border = item.focused ? theme.accent : item.hovered || item.active ? color {theme.accent.r, theme.accent.g, theme.accent.b, 0.70F} : theme.button_border;
+
+    char value_text[32] {};
+    std::snprintf(value_text, sizeof(value_text), "%.2f", static_cast<double>(*value));
+    const float value_width = text_width(value_text);
+
+    add_text({bounds.min, {bounds.max.x - value_width - 10.0F * scale, bounds.min.y + 20.0F * scale}}, label, theme.text_secondary);
+    add_text({{bounds.max.x - value_width, bounds.min.y}, {bounds.max.x, bounds.min.y + 20.0F * scale}}, value_text, item.active ? theme.text : theme.text_secondary);
+
+    add_line({track_start, track_y}, {track_end, track_y}, track_color, 4.0F * scale);
+    add_line({track_start, track_y}, {thumb_x, track_y}, progress_color, 4.0F * scale);
+
+    const rect thumb {{thumb_x - 4.0F * scale, track_y - 8.0F * scale}, {thumb_x + 4.0F * scale, track_y + 8.0F * scale}};
+    add_filled_rect({{thumb.min.x + 1.0F, thumb.min.y + 1.0F}, {thumb.max.x - 1.0F, thumb.max.y - 1.0F}}, thumb_fill);
+    add_soft_outline(thumb, 0.0F, thumb_border);
 
     return changed;
 }

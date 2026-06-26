@@ -21,6 +21,8 @@ target_include_directories(framework
 target_link_libraries(framework
     PUBLIC
         user32
+        psapi
+        winmm
         d3d10
         d3d10_1
         d3d11

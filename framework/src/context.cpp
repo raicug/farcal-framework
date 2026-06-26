@@ -1,9 +1,15 @@
 // clang-format off
 #include <framework/context.hpp>
 
+#include <windows.h>
+#include <psapi.h>
+#include <timeapi.h>
+
+#include <chrono>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 // clang-format on
@@ -21,6 +27,11 @@ struct context {
     std::vector<std::pair<style_color, color>> color_stack {};
     std::vector<std::pair<style_var, float>> var_stack {};
     std::vector<std::uint64_t> id_stack {};
+    statistics stats {};
+    std::chrono::steady_clock::time_point last_begin {};
+    std::chrono::steady_clock::time_point current_begin {};
+    float max_fps {};
+    bool timer_period_enabled {};
     std::uint64_t frame_index {};
     bool in_frame {};
 };
@@ -125,15 +136,33 @@ std::uint64_t current_seed(const context& ctx)
     return ctx.id_stack.empty() ? 14695981039346656037ULL : ctx.id_stack.back();
 }
 
+void update_memory_statistics(statistics& stats)
+{
+    PROCESS_MEMORY_COUNTERS_EX counters {};
+    counters.cb = sizeof(counters);
+
+    if (GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters))) {
+        stats.memory_working_set = counters.WorkingSetSize;
+        stats.memory_private = counters.PrivateUsage;
+    }
+}
+
 }
 
 void create_context(const context_config&)
 {
     current = std::make_unique<context>();
+    if (timeBeginPeriod(1) == TIMERR_NOERROR) {
+        current->timer_period_enabled = true;
+    }
 }
 
 void destroy_context()
 {
+    if (current && current->timer_period_enabled) {
+        timeEndPeriod(1);
+    }
+
     current.reset();
 }
 
@@ -145,6 +174,17 @@ bool has_context()
 void begin_frame(const input_state& input)
 {
     context& ctx = require_context();
+    const auto now = std::chrono::steady_clock::now();
+    ctx.current_begin = now;
+
+    if (ctx.last_begin.time_since_epoch().count() != 0) {
+        ctx.stats.delta_seconds = std::chrono::duration<double>(now - ctx.last_begin).count();
+        if (ctx.stats.delta_seconds > 0.0) {
+            ctx.stats.frames_per_second = 1.0 / ctx.stats.delta_seconds;
+        }
+    }
+
+    ctx.last_begin = now;
     ctx.input = input;
     ctx.background_draw.commands.clear();
     ctx.main_draw.commands.clear();
@@ -161,8 +201,51 @@ void end_frame()
     ctx.combined_draw.commands.insert(ctx.combined_draw.commands.end(), ctx.background_draw.commands.begin(), ctx.background_draw.commands.end());
     ctx.combined_draw.commands.insert(ctx.combined_draw.commands.end(), ctx.main_draw.commands.begin(), ctx.main_draw.commands.end());
     ctx.combined_draw.commands.insert(ctx.combined_draw.commands.end(), ctx.foreground_draw.commands.begin(), ctx.foreground_draw.commands.end());
+    ctx.stats.frame_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - ctx.current_begin).count();
+    ctx.stats.frame_index = ctx.frame_index;
+    ctx.stats.background_command_count = ctx.background_draw.commands.size();
+    ctx.stats.main_command_count = ctx.main_draw.commands.size();
+    ctx.stats.foreground_command_count = ctx.foreground_draw.commands.size();
+    ctx.stats.draw_command_count = ctx.combined_draw.commands.size();
+    update_memory_statistics(ctx.stats);
     ctx.in_frame = false;
     ++ctx.frame_index;
+}
+
+void set_max_fps(float value)
+{
+    require_context().max_fps = (std::max)(0.0F, value);
+}
+
+float max_fps()
+{
+    return require_context().max_fps;
+}
+
+void limit_frame_rate()
+{
+    const context& ctx = require_context();
+    if (ctx.max_fps <= 0.0F) {
+        return;
+    }
+
+    const auto target = std::chrono::duration<double>(1.0 / static_cast<double>(ctx.max_fps));
+    const auto target_time = ctx.current_begin + std::chrono::duration_cast<std::chrono::steady_clock::duration>(target);
+    constexpr auto spin_margin = std::chrono::microseconds(750);
+
+    for (;;) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now >= target_time) {
+            break;
+        }
+
+        const auto remaining = target_time - now;
+        if (remaining > spin_margin) {
+            std::this_thread::sleep_for(remaining - spin_margin);
+        } else {
+            std::this_thread::yield();
+        }
+    }
 }
 
 const input_state& input()
@@ -173,6 +256,11 @@ const input_state& input()
 const draw_data& draw()
 {
     return require_context().combined_draw;
+}
+
+const statistics& stats()
+{
+    return require_context().stats;
 }
 
 draw_data& background_renderer()

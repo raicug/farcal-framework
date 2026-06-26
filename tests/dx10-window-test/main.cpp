@@ -35,6 +35,10 @@ int main()
         bool compiling = false;
         bool vsync = true;
         bool diagnostics = false;
+        float exposure = 1.25F;
+        float gamma = 2.20F;
+        float maximum_fps = 144.0F;
+        farcal::set_max_fps(maximum_fps);
 
         while (window.poll_events()) {
             farcal::begin_frame(window.consume_input());
@@ -47,6 +51,16 @@ int main()
 
             farcal::frame([&] {
                 farcal::window_panel("Farcal Framework", [&] {
+                    const farcal::statistics& stats = farcal::stats();
+                    char fps_text[64] {};
+                    char frame_text[64] {};
+                    char draw_text[64] {};
+                    char memory_text[64] {};
+                    std::snprintf(fps_text, sizeof(fps_text), "UI FPS %.1f", stats.frames_per_second);
+                    std::snprintf(frame_text, sizeof(frame_text), "UI frame %.2f ms", stats.frame_seconds * 1000.0);
+                    std::snprintf(draw_text, sizeof(draw_text), "Draw commands %zu", stats.draw_command_count);
+                    std::snprintf(memory_text, sizeof(memory_text), "Memory %.1f MB", static_cast<double>(stats.memory_working_set) / (1024.0 * 1024.0));
+
                     farcal::title_text("DX10 Backend Preview");
                     farcal::text_secondary("Same immediate-mode UI rendered through DirectX 10.");
                     farcal::separator();
@@ -65,15 +79,23 @@ int main()
                     farcal::checkbox("Diagnostics Overlay", &diagnostics);
                     farcal::pop_style_var();
 
+                    farcal::slider_float("Exposure", &exposure, 0.0F, 5.0F);
+                    farcal::slider_float("Gamma", &gamma, 1.0F, 3.0F);
+                    if (farcal::slider_float("Max FPS", &maximum_fps, 0.0F, 240.0F)) {
+                        farcal::set_max_fps(maximum_fps);
+                    }
+
                     farcal::spacing();
                     farcal::section_text("Status");
 
                     farcal::push_style_color(farcal::style_color::text, {0.322F, 0.824F, 0.451F, 1.0F});
-                    farcal::text("FPS 144.0");
+                    farcal::text(fps_text);
                     farcal::pop_style_color();
 
                     farcal::push_style_color(farcal::style_color::text, {0.722F, 0.753F, 0.800F, 1.0F});
-                    farcal::text("Memory 412 MB");
+                    farcal::text(frame_text);
+                    farcal::text(draw_text);
+                    farcal::text(memory_text);
                     farcal::pop_style_color();
 
                     farcal::button("Stop Polling Next Frame", [&] {
@@ -121,7 +143,8 @@ int main()
 
             farcal::end_frame();
             renderer.render(farcal::draw());
-            renderer.present();
+            renderer.present(vsync);
+            farcal::limit_frame_rate();
         }
 
         farcal::destroy_context();

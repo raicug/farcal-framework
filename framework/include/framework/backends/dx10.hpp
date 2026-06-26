@@ -27,7 +27,7 @@ public:
     bool valid() const;
     void resize(int width, int height);
     void render(const draw_data& data);
-    void present();
+    void present(bool vertical_sync = true);
 
 private:
     window* window_ {};

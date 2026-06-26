@@ -28,6 +28,7 @@ bool is_item_focused();
 bool button(std::string_view label);
 bool primary_button(std::string_view label);
 bool checkbox(std::string_view label, bool* value);
+bool slider_float(std::string_view label, float* value, float minimum, float maximum);
 bool begin_window(std::string_view title);
 void end_window();
 
