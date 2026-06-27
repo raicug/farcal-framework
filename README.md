@@ -192,8 +192,6 @@ The default text face is Inter through DirectWrite. If Inter is not installed on
 
 ## Roadmap
 
-The next useful milestones are:
-
 - Add a framework-owned font atlas for non-DirectWrite backends.
 - Add layout helpers.
 - Add more core widgets.
