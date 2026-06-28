@@ -12,6 +12,8 @@ std::vector<layout_state> layout_stack;
 std::vector<window_layout_state> window_stack;
 std::vector<group_state> group_stack;
 std::vector<list_state> list_stack;
+std::vector<Rect> scroll_block_regions;
+std::vector<Rect> previous_scroll_block_regions;
 std::unordered_map<std::string, window_state> windows;
 std::uint64_t layout_frame = static_cast<std::uint64_t>(-1);
 std::uint64_t active_item{};
@@ -32,6 +34,8 @@ void ensure_layout() {
   window_stack.clear();
   group_stack.clear();
   list_stack.clear();
+  previous_scroll_block_regions = scroll_block_regions;
+  scroll_block_regions.clear();
   LastItem = 0;
   last_hovered = false;
   last_active = false;
@@ -124,6 +128,20 @@ void set_last_item(std::uint64_t id, bool Hovered, bool Active, bool Focused) {
   last_hovered = Hovered;
   last_active = Active;
   last_focused = Focused;
+}
+
+void register_scroll_block(Rect bounds) {
+  scroll_block_regions.push_back(bounds);
+}
+
+bool is_scroll_blocked(Vec2 point) {
+  for (const Rect &bounds : previous_scroll_block_regions) {
+    if (contains(bounds, point)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 item_result item_behavior(std::uint64_t id, Rect bounds) {

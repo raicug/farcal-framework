@@ -22,6 +22,7 @@ struct ComponentDemoState {
   float MaximumFps{144.0F};
   float FrameScale{1.0F};
   float WindowHeight{412.0F};
+  float ChildGain{0.45F};
   int SampleCount{32};
   int SelectedAsset{};
   int RenderMode{};
@@ -325,6 +326,30 @@ inline void RenderComponentDemo(ComponentDemoState &state, Window &window,
                      "and foreground ordering.");
           TextSecondary("Bottom-left overlay: background red, main green, "
                         "foreground blue.");
+
+          Spacing();
+          SectionText("Child Panels");
+          if (BeginChild("Manual Child", {0.0F, 148.0F * state.FrameScale})) {
+            TextSecondary("BeginChild / EndChild");
+            Checkbox("Child Diagnostics", &state.Diagnostics);
+            Slider<float>("Child Gain", &state.ChildGain, 0.0F, 1.0F);
+          }
+          EndChild();
+          SetTooltip("Manual child panel with its own clipping and scroll "
+                     "region.");
+
+          Child("Lambda Child",
+                [&] {
+                  TextSecondary("Lambda child wrapper");
+                  for (int index = 0; index < 10; ++index) {
+                    char label[64]{};
+                    std::snprintf(label, sizeof(label), "Child row %02d",
+                                  index + 1);
+                    TextSecondary(label);
+                  }
+                },
+                {0.0F, 164.0F * state.FrameScale});
+          SetTooltip("Lambda helper around BeginChild and EndChild.");
 
           Spacing();
           SectionText("List");

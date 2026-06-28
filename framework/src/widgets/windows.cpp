@@ -98,7 +98,8 @@ bool BeginWindow(std::string_view Title) {
 
   const float VisibleHeight = scroll_clip.Max.Y - scroll_clip.Min.Y;
   const float MaxScroll = std::max(0.0F, state.ContentHeight - VisibleHeight);
-  if (Hovered && io.MouseWheel != 0.0F) {
+  if (Hovered && io.MouseWheel != 0.0F &&
+      !widget_internal::is_scroll_blocked(io.MousePosition)) {
     state.ScrollY = std::clamp(state.ScrollY - io.MouseWheel * 44.0F * scale,
                                0.0F, MaxScroll);
   }

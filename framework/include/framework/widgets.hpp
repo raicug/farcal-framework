@@ -52,6 +52,8 @@ void EndTabs();
 bool BeginList(std::string_view label, Vec2 size = {});
 void EndList();
 bool ListItem(std::string_view label, bool selected = false);
+bool BeginChild(std::string_view label, Vec2 size = {});
+void EndChild();
 bool BeginWindow(std::string_view Title);
 void EndWindow();
 
@@ -143,6 +145,15 @@ void List(std::string_view label, Callback &&callback, Vec2 size = {}) {
   }
 
   EndList();
+}
+
+template <std::invocable Callback>
+void Child(std::string_view label, Callback &&callback, Vec2 size = {}) {
+  if (BeginChild(label, size)) {
+    callback();
+  }
+
+  EndChild();
 }
 
 } // namespace farcal

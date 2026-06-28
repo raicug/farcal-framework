@@ -13,7 +13,7 @@ This project is not production-ready yet. The public framework API is intentiona
 - Immediate-mode frame API: `farcal::Frame(...)`
 - Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Checkbox(...)`, `farcal::Slider<T>(...)`
 - Inputs: `farcal::Dropdown(...)`, `farcal::InputText(...)`, `farcal::Keybind(...)`
-- Pickers and lists: `farcal::ColorEdit(...)`, `farcal::List(...)`, `farcal::ListItem(...)`
+- Pickers, lists, and child panels: `farcal::ColorEdit(...)`, `farcal::List(...)`, `farcal::Child(...)`
 - Tab bars: `farcal::BeginTabs(...)`, `farcal::EndTabs()`
 - Text hierarchy: `farcal::TitleText(...)`, `farcal::SectionText(...)`, `farcal::TextSecondary(...)`
 - Primary actions: `farcal::PrimaryButton(...)`
@@ -189,6 +189,12 @@ while (Window.PollEvents()) {
             static farcal::Color Accent = farcal::Color::Rgb(92, 139, 255);
             farcal::ColorEdit("Accent", &Accent);
 
+            farcal::Child("Scene Details", [&] {
+                farcal::TextSecondary("Child panels have their own clipping and scroll state.");
+                farcal::Checkbox("Child Diagnostics", &Diagnostics);
+                farcal::Slider<float>("Child Exposure", &Exposure, 0.0F, 5.0F, "ev");
+            }, {0.0F, 128.0F});
+
             static int SelectedItem = 0;
             farcal::List("Entities", [&] {
                 if (farcal::ListItem("Camera", SelectedItem == 0)) {
@@ -228,6 +234,7 @@ The default text face is Inter through DirectWrite. If Inter is not installed on
 ## Widget notes
 
 - `Slider<T>(...)` supports integral and floating-point values and accepts an optional suffix, for example `"px"` or `"fps"`.
+- `BeginChild(...)` / `EndChild()` create a clipped scrollable child panel. `Child(...)` is the callback wrapper.
 - `ColorEdit(...)` opens a draggable picker window with saturation/value, hue, alpha, and RGBA byte fields.
 - `Keybind(...)` stores keyboard virtual-key codes directly. Mouse buttons are stored as `256 + mouse_index`.
 - `Keybind(label, &key, &mode)` supports `KeybindMode::Toggle` and `KeybindMode::Hold`.
