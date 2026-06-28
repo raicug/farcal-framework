@@ -32,6 +32,7 @@ bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
 bool Checkbox(std::string_view label, bool* value);
 bool SliderFloat(std::string_view label, float* value, float minimum, float maximum, std::string_view suffix = {});
+bool ColorEdit(std::string_view label, Color* value);
 bool Dropdown(std::string_view label, int* selected, const char* const* items, int item_count);
 bool InputText(std::string_view label, char* buffer, std::size_t buffer_size);
 bool BeginTabs(std::string_view label, int* selected, const char* const* tabs, int tab_count);

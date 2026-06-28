@@ -3,6 +3,7 @@
 // clang-format off
 #include <framework/framework.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <string_view>
 // clang-format on
@@ -26,6 +27,7 @@ struct ComponentDemoState {
     int ComponentTab {};
     int DirectClicks {};
     int CallbackClicks {};
+    Color AccentPreview {Color::Rgb(92, 139, 255)};
     char SearchText[64] {};
 };
 
@@ -129,6 +131,25 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                     PushStyleColor(StyleColor::ButtonHovered, Color::Rgb(48, 23, 20));
                     PushStyleColor(StyleColor::ButtonActive, Color::Rgb(62, 27, 23));
                     Button("Styled Button", [&] {
+                        ++state.CallbackClicks;
+                    });
+                    PopStyleColor();
+                    PopStyleColor();
+                    PopStyleColor();
+
+                    Spacing();
+                    SectionText("Color Edit");
+                    ColorEdit("Accent Preview", &state.AccentPreview);
+                    PushStyleColor(StyleColor::ButtonPrimary, state.AccentPreview);
+                    PushStyleColor(StyleColor::ButtonPrimaryHovered, Color::Rgba(
+                        (std::min)(255, static_cast<int>(state.AccentPreview.R * 255.0F) + 24),
+                        (std::min)(255, static_cast<int>(state.AccentPreview.G * 255.0F) + 24),
+                        (std::min)(255, static_cast<int>(state.AccentPreview.B * 255.0F) + 24)));
+                    PushStyleColor(StyleColor::ButtonPrimaryActive, Color::Rgba(
+                        (std::max)(0, static_cast<int>(state.AccentPreview.R * 255.0F) - 24),
+                        (std::max)(0, static_cast<int>(state.AccentPreview.G * 255.0F) - 24),
+                        (std::max)(0, static_cast<int>(state.AccentPreview.B * 255.0F) - 24)));
+                    PrimaryButton("Preview Color", [&] {
                         ++state.CallbackClicks;
                     });
                     PopStyleColor();
