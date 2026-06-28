@@ -88,6 +88,72 @@ bool Checkbox(std::string_view label, bool *value) {
   return changed;
 }
 
+bool RadioButton(std::string_view label, int *selected, int value) {
+  widget_internal::ensure_layout();
+  if (selected == nullptr) {
+    return false;
+  }
+
+  const Style &theme = CurrentStyle();
+  const float scale = theme.FrameScale;
+  const float Height = 24.0F * scale;
+  const float box_size = 16.0F * scale;
+  const float gap = 10.0F * scale;
+  const float label_width = widget_internal::text_width(label);
+  const float Width = widget_internal::layout.ContentWidth > 0.0F
+                          ? widget_internal::layout.ContentWidth
+                          : box_size + gap + label_width;
+  const Rect bounds = widget_internal::next_rect(Width, Height);
+  const std::uint64_t id = CurrentId(label);
+  const widget_internal::item_result item =
+      widget_internal::item_behavior(id, bounds);
+  const bool activated = item.Clicked || widget_internal::keyboard_toggle(id);
+  const bool checked = *selected == value;
+  const bool changed = activated && !checked;
+
+  if (changed) {
+    *selected = value;
+  }
+
+  const float box_y = bounds.Min.Y + (Height - box_size) * 0.5F;
+  const Rect box{{bounds.Min.X, box_y},
+                 {bounds.Min.X + box_size, box_y + box_size}};
+  const Color fill = item.Active    ? theme.ButtonActive
+                     : item.Hovered ? theme.ButtonHovered
+                                    : theme.Button;
+  const Color border =
+      item.Focused ? theme.Accent
+      : checked ? Color{theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.82F}
+      : item.Hovered
+          ? Color{theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.34F}
+          : theme.ButtonBorder;
+
+  widget_internal::add_filled_rect({{box.Min.X + 1.0F, box.Min.Y + 1.0F},
+                                    {box.Max.X - 1.0F, box.Max.Y - 1.0F}},
+                                   fill);
+  widget_internal::add_hline(box.Min.X + 1.0F, box.Max.X - 1.0F,
+                             box.Min.Y + 1.0F,
+                             item.Hovered ? Color{1.0F, 1.0F, 1.0F, 0.12F}
+                                          : Color{1.0F, 1.0F, 1.0F, 0.05F});
+  widget_internal::add_soft_outline(box, 0.0F, border);
+
+  if (checked) {
+    const float inset = 5.0F * scale;
+    const Color mark = item.Active    ? theme.ButtonPrimaryActive
+                       : item.Hovered ? theme.ButtonPrimaryHovered
+                                      : theme.ButtonPrimary;
+    widget_internal::add_filled_rect({{box.Min.X + inset, box.Min.Y + inset},
+                                      {box.Max.X - inset, box.Max.Y - inset}},
+                                     mark);
+  }
+
+  const Color text_color = checked ? theme.Text : theme.TextSecondary;
+  widget_internal::add_text({{box.Max.X + gap, bounds.Min.Y}, bounds.Max},
+                            label, text_color);
+
+  return changed;
+}
+
 namespace widget_internal {
 
 bool SliderScalar(std::string_view label, double *value, double minimum,

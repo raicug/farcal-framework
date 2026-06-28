@@ -224,6 +224,11 @@ inline void RenderComponentDemo(ComponentDemoState &state, Window &window,
                                     "Diagnostics"};
           Dropdown("Render Mode", &state.RenderMode, renderModes);
           SetTooltip("Selects the demo render quality preset.");
+          RadioButton("Balanced", &state.RenderMode, 0);
+          RadioButton("Quality", &state.RenderMode, 1);
+          RadioButton("Performance", &state.RenderMode, 2);
+          RadioButton("Diagnostics", &state.RenderMode, 3);
+          SetTooltip("Radio buttons share the render mode selection value.");
           InputText("Search assets", state.SearchText,
                     sizeof(state.SearchText));
           SetTooltip("Typing here suppresses demo keybind logging.");

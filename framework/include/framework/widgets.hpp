@@ -33,6 +33,7 @@ void SetTooltip(std::string_view value);
 bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
 bool Checkbox(std::string_view label, bool *value);
+bool RadioButton(std::string_view label, int *selected, int value);
 bool SliderFloat(std::string_view label, float *value, float minimum,
                  float maximum, std::string_view suffix = {});
 bool ColorEdit(std::string_view label, Color *value);

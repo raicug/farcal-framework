@@ -11,7 +11,7 @@ This project is not production-ready yet. The public framework API is intentiona
 - C++20 static library target: `farcal::framework`
 - Public include root: `framework/include`
 - Immediate-mode frame API: `farcal::Frame(...)`
-- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Checkbox(...)`, `farcal::Slider<T>(...)`
+- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Checkbox(...)`, `farcal::RadioButton(...)`, `farcal::Slider<T>(...)`
 - Inputs: `farcal::Dropdown(...)`, `farcal::InputText(...)`, `farcal::Keybind(...)`
 - Pickers, lists, and child panels: `farcal::ColorEdit(...)`, `farcal::List(...)`, `farcal::Child(...)`
 - Tab bars: `farcal::BeginTabs(...)`, `farcal::EndTabs()`
@@ -173,6 +173,9 @@ while (Window.PollEvents()) {
             static int RenderMode = 0;
             const char* RenderModes[] {"Balanced", "Quality", "Performance"};
             farcal::Dropdown("Render Mode", &RenderMode, RenderModes);
+            farcal::RadioButton("Balanced", &RenderMode, 0);
+            farcal::RadioButton("Quality", &RenderMode, 1);
+            farcal::RadioButton("Performance", &RenderMode, 2);
 
             static char Search[64] {};
             farcal::InputText("Search assets", Search, sizeof(Search));
@@ -234,6 +237,7 @@ The default text face is Inter through DirectWrite. If Inter is not installed on
 ## Widget notes
 
 - `Slider<T>(...)` supports integral and floating-point values and accepts an optional suffix, for example `"px"` or `"fps"`.
+- `RadioButton(label, &selected, value)` sets an integer selection value when clicked or keyboard-toggled.
 - `BeginChild(...)` / `EndChild()` create a clipped scrollable child panel. `Child(...)` is the callback wrapper.
 - `ColorEdit(...)` opens a draggable picker window with saturation/value, hue, alpha, and RGBA byte fields.
 - `Keybind(...)` stores keyboard virtual-key codes directly. Mouse buttons are stored as `256 + mouse_index`.
