@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <concepts>
+#include <cstddef>
 #include <string_view>
 #include <type_traits>
 // clang-format on
@@ -31,6 +32,8 @@ bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
 bool Checkbox(std::string_view label, bool* value);
 bool SliderFloat(std::string_view label, float* value, float minimum, float maximum, std::string_view suffix = {});
+bool Dropdown(std::string_view label, int* selected, const char* const* items, int item_count);
+bool InputText(std::string_view label, char* buffer, std::size_t buffer_size);
 bool BeginList(std::string_view label, Vec2 size = {});
 void EndList();
 bool ListItem(std::string_view label, bool selected = false);
@@ -73,6 +76,12 @@ bool Slider(std::string_view label, Value* value, Value minimum, Value maximum, 
     }
 
     return true;
+}
+
+template <std::size_t Count>
+bool Dropdown(std::string_view label, int* selected, const char* const (&items)[Count])
+{
+    return Dropdown(label, selected, items, static_cast<int>(Count));
 }
 
 template <std::invocable Callback>

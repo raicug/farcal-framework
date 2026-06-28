@@ -135,7 +135,9 @@ InputState Window::ConsumeInput()
     Input_.MousePressed.fill(false);
     Input_.MouseReleased.fill(false);
     Input_.KeyPressed.fill(false);
+    Input_.KeyRepeated.fill(false);
     Input_.KeyReleased.fill(false);
+    Input_.TextInput.clear();
     return result;
 }
 
@@ -250,7 +252,9 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam)
     case WM_SYSKEYDOWN:
         if (wparam < Input_.KeyDown.size()) {
             const std::size_t key = static_cast<std::size_t>(wparam);
-            Input_.KeyPressed[key] = !Input_.KeyDown[key];
+            const bool was_down = Input_.KeyDown[key];
+            Input_.KeyPressed[key] = !was_down;
+            Input_.KeyRepeated[key] = was_down;
             Input_.KeyDown[key] = true;
         }
         Input_.Shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
@@ -268,6 +272,12 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam)
         Input_.Shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
         Input_.Control = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
         Input_.Alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+        return 0;
+
+    case WM_CHAR:
+        if (wparam >= 32 && wparam != 127) {
+            Input_.TextInput.push_back(static_cast<char>(wparam));
+        }
         return 0;
 
     default:

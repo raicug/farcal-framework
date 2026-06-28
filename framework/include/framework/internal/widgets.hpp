@@ -71,6 +71,7 @@ extern std::uint64_t layout_frame;
 extern std::uint64_t active_item;
 extern std::uint64_t focused_item;
 extern std::uint64_t LastItem;
+extern std::uint64_t open_dropdown;
 extern bool last_hovered;
 extern bool last_active;
 extern bool last_focused;

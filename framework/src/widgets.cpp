@@ -17,6 +17,7 @@ std::uint64_t layout_frame = static_cast<std::uint64_t>(-1);
 std::uint64_t active_item {};
 std::uint64_t focused_item {};
 std::uint64_t LastItem {};
+std::uint64_t open_dropdown {};
 bool last_hovered {};
 bool last_active {};
 bool last_focused {};

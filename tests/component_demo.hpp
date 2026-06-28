@@ -22,8 +22,10 @@ struct ComponentDemoState {
     float WindowHeight {412.0F};
     int SampleCount {32};
     int SelectedAsset {};
+    int RenderMode {};
     int DirectClicks {};
     int CallbackClicks {};
+    char SearchText[64] {};
 };
 
 inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::string_view backendName, std::string_view assetPrefix)
@@ -96,6 +98,12 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
             Checkbox("Diagnostics Overlay", &state.Diagnostics);
             Checkbox("Compact Layout", &state.CompactMode);
             PopStyleVar();
+
+            Spacing();
+            SectionText("Inputs");
+            const char* renderModes[] {"Balanced", "Quality", "Performance", "Diagnostics"};
+            Dropdown("Render Mode", &state.RenderMode, renderModes);
+            InputText("Search assets", state.SearchText, sizeof(state.SearchText));
 
             Spacing();
             SectionText("Sliders");

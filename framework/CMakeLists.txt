@@ -7,6 +7,7 @@ add_library(framework STATIC
     src/main.cpp
     src/widgets.cpp
     src/widgets/controls.cpp
+    src/widgets/input.cpp
     src/widgets/layout.cpp
     src/widgets/lists.cpp
     src/widgets/text.cpp
