@@ -16,6 +16,7 @@ struct ComponentDemoState {
     bool Vsync {true};
     bool Diagnostics {};
     bool CompactMode {};
+    bool DrawLayerTest {true};
     float Exposure {1.25F};
     float Gamma {2.20F};
     float MaximumFps {144.0F};
@@ -75,6 +76,52 @@ inline void UpdateDemoKeybindLog(ComponentDemoState& state)
     }
 
     state.ToggleMenuWasDown = down;
+}
+
+inline void RenderDrawLayerTest(const Window& window)
+{
+    const Style& style = CurrentStyle();
+    const float scale = style.FrameScale;
+    const Rect bounds {
+        {24.0F * scale, static_cast<float>(window.Height()) - 158.0F * scale},
+        {268.0F * scale, static_cast<float>(window.Height()) - 24.0F * scale},
+    };
+    const Rect background {
+        {bounds.Min.X + 10.0F * scale, bounds.Min.Y + 14.0F * scale},
+        {bounds.Min.X + 154.0F * scale, bounds.Min.Y + 86.0F * scale},
+    };
+    const Rect main {
+        {bounds.Min.X + 44.0F * scale, bounds.Min.Y + 38.0F * scale},
+        {bounds.Min.X + 188.0F * scale, bounds.Min.Y + 110.0F * scale},
+    };
+    const Rect foreground {
+        {bounds.Min.X + 80.0F * scale, bounds.Min.Y + 20.0F * scale},
+        {bounds.Min.X + 222.0F * scale, bounds.Min.Y + 96.0F * scale},
+    };
+
+    BackgroundRenderer().Commands.push_back({
+        .Type = DrawCommandType::FilledRect,
+        .Bounds = background,
+        .Tint = Color::Rgba(232, 78, 88, 150),
+    });
+    MainRenderer().Commands.push_back({
+        .Type = DrawCommandType::FilledRect,
+        .Bounds = main,
+        .Tint = Color::Rgba(82, 210, 115, 170),
+    });
+    ForegroundRenderer().Commands.push_back({
+        .Type = DrawCommandType::Rect,
+        .Bounds = foreground,
+        .Tint = Color::Rgba(92, 139, 255, 230),
+        .Thickness = 2.0F * scale,
+    });
+    ForegroundRenderer().Commands.push_back({
+        .Type = DrawCommandType::Text,
+        .Bounds = {{foreground.Min.X + 8.0F * scale, foreground.Min.Y}, foreground.Max},
+        .Tint = Color::Rgb(232, 236, 244),
+        .FontSize = 13.0F * scale,
+        .Text = "Foreground layer",
+    });
 }
 
 inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::string_view backendName, std::string_view assetPrefix)
@@ -232,6 +279,11 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                     EndGroup();
 
                     Spacing();
+                    SectionText("Draw Layers");
+                    Checkbox("Show Draw Layer Test", &state.DrawLayerTest);
+                    TextSecondary("Bottom-left overlay: background red, main green, foreground blue.");
+
+                    Spacing();
                     SectionText("List");
                     List("Asset List", [&] {
                         for (int index = 0; index < 8; ++index) {
@@ -281,6 +333,10 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
         }
         EndWindow();
     });
+
+    if (state.DrawLayerTest) {
+        RenderDrawLayerTest(window);
+    }
 }
 
 }
