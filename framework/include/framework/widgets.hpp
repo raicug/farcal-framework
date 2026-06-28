@@ -30,16 +30,16 @@ bool IsItemFocused();
 bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
 bool Checkbox(std::string_view label, bool* value);
-bool SliderFloat(std::string_view label, float* value, float minimum, float maximum);
+bool SliderFloat(std::string_view label, float* value, float minimum, float maximum, std::string_view suffix = {});
 bool BeginList(std::string_view label, Vec2 size = {});
 void EndList();
 bool ListItem(std::string_view label, bool selected = false);
 bool BeginWindow(std::string_view Title);
 void EndWindow();
 
-namespace detail {
+namespace widget_internal {
 
-bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral);
+bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral, std::string_view suffix);
 
 }
 
@@ -47,19 +47,20 @@ template <typename Value>
 concept SliderValue = (std::integral<Value> || std::floating_point<Value>) && !std::same_as<std::remove_cv_t<Value>, bool>;
 
 template <SliderValue Value>
-bool Slider(std::string_view label, Value* value, Value minimum, Value maximum)
+bool Slider(std::string_view label, Value* value, Value minimum, Value maximum, std::string_view suffix = {})
 {
     if (value == nullptr) {
         return false;
     }
 
     double scalar = static_cast<double>(*value);
-    const bool changed = detail::SliderScalar(
+    const bool changed = widget_internal::SliderScalar(
         label,
         &scalar,
         static_cast<double>(minimum),
         static_cast<double>(maximum),
-        std::integral<Value>);
+        std::integral<Value>,
+        suffix);
 
     if (!changed) {
         return false;

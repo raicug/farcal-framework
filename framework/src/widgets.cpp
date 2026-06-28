@@ -605,9 +605,9 @@ bool Checkbox(std::string_view label, bool* value)
     return changed;
 }
 
-namespace detail {
+namespace widget_internal {
 
-bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral)
+bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral, std::string_view suffix)
 {
     ensure_layout();
     if (value == nullptr) {
@@ -657,9 +657,17 @@ bool SliderScalar(std::string_view label, double* value, double minimum, double 
 
     char value_text[32] {};
     if (integral) {
-        std::snprintf(value_text, sizeof(value_text), "%.0f", *value);
+        if (suffix.empty()) {
+            std::snprintf(value_text, sizeof(value_text), "%.0f", *value);
+        } else {
+            std::snprintf(value_text, sizeof(value_text), "%.0f %.*s", *value, static_cast<int>(suffix.size()), suffix.data());
+        }
     } else {
-        std::snprintf(value_text, sizeof(value_text), "%.2f", *value);
+        if (suffix.empty()) {
+            std::snprintf(value_text, sizeof(value_text), "%.2f", *value);
+        } else {
+            std::snprintf(value_text, sizeof(value_text), "%.2f %.*s", *value, static_cast<int>(suffix.size()), suffix.data());
+        }
     }
     const float value_width = text_width(value_text);
 
@@ -678,14 +686,14 @@ bool SliderScalar(std::string_view label, double* value, double minimum, double 
 
 }
 
-bool SliderFloat(std::string_view label, float* value, float minimum, float maximum)
+bool SliderFloat(std::string_view label, float* value, float minimum, float maximum, std::string_view suffix)
 {
     if (value == nullptr) {
         return false;
     }
 
     double scalar = static_cast<double>(*value);
-    const bool changed = detail::SliderScalar(label, &scalar, static_cast<double>(minimum), static_cast<double>(maximum), false);
+    const bool changed = widget_internal::SliderScalar(label, &scalar, static_cast<double>(minimum), static_cast<double>(maximum), false, suffix);
     if (changed) {
         *value = static_cast<float>(scalar);
     }

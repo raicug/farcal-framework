@@ -157,7 +157,7 @@ while (Window.PollEvents()) {
 
             farcal::SectionText("Scene");
             static float Exposure = 1.0F;
-            farcal::Slider<float>("Exposure", &Exposure, 0.0F, 5.0F);
+            farcal::Slider<float>("Exposure", &Exposure, 0.0F, 5.0F, "ev");
 
             farcal::PushStyleColor(farcal::StyleColor::Text, farcal::Color::Rgb(82, 210, 115));
             farcal::Text("Ready");

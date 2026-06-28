@@ -99,14 +99,14 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
 
             Spacing();
             SectionText("Sliders");
-            Slider<float>("Exposure", &state.Exposure, 0.0F, 5.0F);
+            Slider<float>("Exposure", &state.Exposure, 0.0F, 5.0F, "ev");
             Slider<float>("Gamma", &state.Gamma, 1.0F, 3.0F);
-            Slider<int>("Samples", &state.SampleCount, 1, 128);
-            if (Slider<float>("Max FPS", &state.MaximumFps, 0.0F, 240.0F)) {
+            Slider<int>("Samples", &state.SampleCount, 1, 128, "x");
+            if (Slider<float>("Max FPS", &state.MaximumFps, 0.0F, 240.0F, "fps")) {
                 SetMaxFps(state.MaximumFps);
             }
             Slider<float>("Frame Scale", &state.FrameScale, 0.80F, 1.35F);
-            Slider<float>("Window Height", &state.WindowHeight, 320.0F, 560.0F);
+            Slider<float>("Window Height", &state.WindowHeight, 320.0F, 560.0F, "px");
 
             Spacing();
             SectionText("Style Stack");
