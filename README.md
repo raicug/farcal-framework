@@ -11,7 +11,7 @@ This project is not production-ready yet. The public framework API is intentiona
 - C++20 static library target: `farcal::framework`
 - Public include root: `framework/include`
 - Immediate-mode frame API: `farcal::Frame(...)`
-- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Slider<T>(...)`
+- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Slider<T>(...)`, `farcal::ListItem(...)`
 - Text hierarchy: `farcal::TitleText(...)`, `farcal::SectionText(...)`, `farcal::TextSecondary(...)`
 - Primary actions: `farcal::PrimaryButton(...)`
 - ImGui-style UI windows: `farcal::WindowPanel(...)`
@@ -146,7 +146,7 @@ while (Window.PollEvents()) {
     farcal::BackgroundRenderer().Commands.push_back({
         .Type = farcal::DrawCommandType::FilledRect,
         .Bounds = {{0.0F, 0.0F}, {1280.0F, 720.0F}},
-        .Tint = farcal::Color::Rgb(0.055F, 0.055F, 0.064F),
+        .Tint = farcal::Color::Rgb(14, 14, 16),
     });
 
     farcal::Frame([&] {
@@ -159,9 +159,19 @@ while (Window.PollEvents()) {
             static float Exposure = 1.0F;
             farcal::Slider<float>("Exposure", &Exposure, 0.0F, 5.0F);
 
-            farcal::PushStyleColor(farcal::StyleColor::Text, farcal::Color::FromBytes(82, 210, 115));
+            farcal::PushStyleColor(farcal::StyleColor::Text, farcal::Color::Rgb(82, 210, 115));
             farcal::Text("Ready");
             farcal::PopStyleColor();
+
+            static int SelectedItem = 0;
+            farcal::List("Entities", [&] {
+                if (farcal::ListItem("Camera", SelectedItem == 0)) {
+                    SelectedItem = 0;
+                }
+                if (farcal::ListItem("Light", SelectedItem == 1)) {
+                    SelectedItem = 1;
+                }
+            });
 
             farcal::PrimaryButton("Select Entity", [&] {
                 Window.CancelNextPoll();

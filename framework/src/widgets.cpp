@@ -27,6 +27,7 @@ struct layout_state {
     float LineBottom {};
     float NextItemWidth {};
     float IndentWidth {};
+    float ItemSpacingY {-1.0F};
 };
 
 struct window_state {
@@ -52,6 +53,13 @@ struct group_state {
     layout_state Parent {};
 };
 
+struct list_state {
+    layout_state Parent {};
+    Rect Bounds {};
+    std::uint64_t Id {};
+    bool Hovered {};
+};
+
 struct item_result {
     bool Hovered {};
     bool Active {};
@@ -63,6 +71,7 @@ layout_state layout;
 std::vector<layout_state> layout_stack;
 std::vector<window_layout_state> window_stack;
 std::vector<group_state> group_stack;
+std::vector<list_state> list_stack;
 std::unordered_map<std::string, window_state> windows;
 std::uint64_t layout_frame = static_cast<std::uint64_t>(-1);
 std::uint64_t active_item {};
@@ -82,6 +91,7 @@ void ensure_layout()
     layout_stack.clear();
     window_stack.clear();
     group_stack.clear();
+    list_stack.clear();
     LastItem = 0;
     last_hovered = false;
     last_active = false;
@@ -107,6 +117,11 @@ Rect intersect(Rect a, Rect b)
     };
 }
 
+bool has_area(Rect value)
+{
+    return value.Max.X > value.Min.X && value.Max.Y > value.Min.Y;
+}
+
 Rect active_clip(Rect bounds)
 {
     if (!layout.HasClip) {
@@ -123,6 +138,11 @@ Rect command_clip(Rect bounds)
     }
 
     return layout.Clip;
+}
+
+bool is_visible(Rect bounds)
+{
+    return !layout.HasClip || has_area(intersect(bounds, layout.Clip));
 }
 
 float text_width(std::string_view value)
@@ -147,7 +167,8 @@ Rect next_rect(float Width, float Height)
         layout.NextItemWidth = 0.0F;
     }
 
-    const float Spacing = CurrentStyle().ItemSpacingY * CurrentStyle().FrameScale;
+    const Style& theme = CurrentStyle();
+    const float Spacing = (layout.ItemSpacingY >= 0.0F ? layout.ItemSpacingY : theme.ItemSpacingY) * theme.FrameScale;
     Rect bounds {
         layout.Cursor,
         {layout.Cursor.X + Width, layout.Cursor.Y + Height},
@@ -238,6 +259,10 @@ bool set_scalar_value(double* target, double value, double minimum, double maxim
 
 void add_text(Rect bounds, std::string_view value, Color tint)
 {
+    if (!is_visible(bounds)) {
+        return;
+    }
+
     const Style& theme = CurrentStyle();
     mutable_draw().Commands.push_back({
         .Type = DrawCommandType::Text,
@@ -252,6 +277,10 @@ void add_text(Rect bounds, std::string_view value, Color tint)
 
 void add_filled_rect(Rect bounds, Color tint)
 {
+    if (!is_visible(bounds)) {
+        return;
+    }
+
     mutable_draw().Commands.push_back({
         .Type = DrawCommandType::FilledRect,
         .Bounds = bounds,
@@ -263,6 +292,10 @@ void add_filled_rect(Rect bounds, Color tint)
 
 void add_rect(Rect bounds, Color tint, float thickness = 1.0F)
 {
+    if (!is_visible(bounds)) {
+        return;
+    }
+
     mutable_draw().Commands.push_back({
         .Type = DrawCommandType::Rect,
         .Bounds = bounds,
@@ -279,6 +312,14 @@ void add_line(Vec2 start, Vec2 end, Color tint, float thickness)
         {std::min(start.X, end.X), std::min(start.Y, end.Y)},
         {std::max(start.X, end.X), std::max(start.Y, end.Y)},
     };
+    const Rect hit_bounds {
+        {bounds.Min.X - thickness, bounds.Min.Y - thickness},
+        {bounds.Max.X + thickness, bounds.Max.Y + thickness},
+    };
+
+    if (!is_visible(hit_bounds)) {
+        return;
+    }
 
     mutable_draw().Commands.push_back({
         .Type = DrawCommandType::Line,
@@ -331,8 +372,10 @@ bool button_impl(std::string_view label, Color normal, Color hovered_color, Colo
     ensure_layout();
     const Style& theme = CurrentStyle();
     const float scale = theme.FrameScale;
-    const float Height = 30.0F * scale;
-    const float Width = layout.ContentWidth > 0.0F ? std::min(theme.ItemWidth * scale, layout.ContentWidth) : theme.ItemWidth * scale;
+    const float Height = 32.0F * scale;
+    const float minimum_width = text_width(label) + theme.FramePaddingX * scale * 2.0F;
+    const float preferred_width = std::max(theme.ItemWidth * scale, minimum_width);
+    const float Width = layout.ContentWidth > 0.0F ? std::min(preferred_width, layout.ContentWidth) : preferred_width;
     const Rect bounds = next_rect(Width, Height);
     const item_result item = item_behavior(CurrentId(label), bounds);
     const Color fill = item.Active ? active_color : item.Hovered ? hovered_color : normal;
@@ -341,7 +384,7 @@ bool button_impl(std::string_view label, Color normal, Color hovered_color, Colo
     add_soft_rect(bounds, 4.0F * scale, fill);
     add_hline(bounds.Min.X + 4.0F * scale, bounds.Max.X - 4.0F * scale, bounds.Min.Y + 1.0F, top_edge);
     add_soft_outline(bounds, 4.0F * scale, item.Focused ? theme.Accent : item.Hovered ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.36F} : theme.ButtonBorder);
-    add_text({{bounds.Min.X + theme.FramePaddingX * scale, bounds.Min.Y + 6.0F * scale}, bounds.Max}, label, text_color);
+    add_text({{bounds.Min.X + theme.FramePaddingX * scale, bounds.Min.Y}, bounds.Max}, label, text_color);
 
     return item.Clicked;
 }
@@ -557,7 +600,7 @@ bool Checkbox(std::string_view label, bool* value)
     }
 
     const Color text_color = *value ? theme.Text : theme.TextSecondary;
-    add_text({{box.Max.X + gap, bounds.Min.Y + 2.0F * scale}, bounds.Max}, label, text_color);
+    add_text({{box.Max.X + gap, bounds.Min.Y}, bounds.Max}, label, text_color);
 
     return changed;
 }
@@ -650,6 +693,96 @@ bool SliderFloat(std::string_view label, float* value, float minimum, float maxi
     return changed;
 }
 
+bool BeginList(std::string_view label, Vec2 size)
+{
+    ensure_layout();
+
+    const Style& theme = CurrentStyle();
+    const float scale = theme.FrameScale;
+    const float width = size.X > 0.0F ? size.X : (layout.ContentWidth > 0.0F ? layout.ContentWidth : theme.ItemWidth * scale);
+    const float height = size.Y > 0.0F ? size.Y : 156.0F * scale;
+    const Rect bounds = next_rect(width, height);
+    const std::uint64_t id = CurrentId(label);
+    const bool hovered = contains(active_clip(bounds), Input().MousePosition);
+    const Rect inner {
+        {bounds.Min.X + 6.0F * scale, bounds.Min.Y + 6.0F * scale},
+        {bounds.Max.X - 6.0F * scale, bounds.Max.Y - 6.0F * scale},
+    };
+
+    add_filled_rect(bounds, Color::RgbaF(theme.WindowPanel.R, theme.WindowPanel.G, theme.WindowPanel.B, 0.88F));
+    add_hline(bounds.Min.X + 1.0F, bounds.Max.X - 1.0F, bounds.Min.Y + 1.0F, hovered ? Color::RgbaF(1.0F, 1.0F, 1.0F, 0.10F) : Color::RgbaF(1.0F, 1.0F, 1.0F, 0.04F));
+    add_soft_outline(bounds, 3.0F * scale, hovered ? Color::RgbaF(theme.WindowBorder.R, theme.WindowBorder.G, theme.WindowBorder.B, 0.92F) : theme.ButtonBorder);
+
+    list_stack.push_back({
+        .Parent = layout,
+        .Bounds = bounds,
+        .Id = id,
+        .Hovered = hovered,
+    });
+
+    layout.Cursor = inner.Min;
+    layout.StartX = inner.Min.X;
+    layout.ContentWidth = std::max(0.0F, inner.Max.X - inner.Min.X);
+    layout.Clip = active_clip(inner);
+    layout.HasClip = true;
+    layout.HasLastItem = false;
+    layout.LineBottom = inner.Min.Y;
+    layout.NextItemWidth = 0.0F;
+    layout.IndentWidth = 0.0F;
+    layout.ItemSpacingY = 0.0F;
+
+    return true;
+}
+
+void EndList()
+{
+    ensure_layout();
+    if (list_stack.empty()) {
+        throw std::logic_error("farcal List stack is empty");
+    }
+
+    const list_state state = list_stack.back();
+    list_stack.pop_back();
+
+    layout = state.Parent;
+    layout.LastItem = state.Bounds;
+    layout.HasLastItem = true;
+    layout.LineBottom = state.Bounds.Max.Y;
+    set_last_item(state.Id, state.Hovered, false, focused_item == state.Id);
+}
+
+bool ListItem(std::string_view label, bool selected)
+{
+    ensure_layout();
+
+    const Style& theme = CurrentStyle();
+    const float scale = theme.FrameScale;
+    const float height = 26.0F * scale;
+    const Rect bounds = next_rect(layout.ContentWidth > 0.0F ? layout.ContentWidth : theme.ItemWidth * scale, height);
+    const std::uint64_t id = CurrentId(label);
+    const item_result item = item_behavior(id, bounds);
+    const bool activated = item.Clicked || keyboard_toggle(id);
+
+    const Color fill = item.Active
+        ? theme.ButtonActive
+        : selected ? Color::RgbaF(theme.Selection.R, theme.Selection.G, theme.Selection.B, item.Hovered ? 0.68F : 0.48F)
+                   : item.Hovered ? Color::RgbaF(theme.ButtonHovered.R, theme.ButtonHovered.G, theme.ButtonHovered.B, 0.88F)
+                                  : Color::RgbaF(theme.Button.R, theme.Button.G, theme.Button.B, 0.0F);
+    const Color text_color = selected || item.Hovered || item.Active ? theme.Text : theme.TextSecondary;
+
+    if (selected || item.Hovered || item.Active) {
+        add_filled_rect(bounds, fill);
+    }
+
+    if (item.Focused) {
+        add_soft_outline(bounds, 0.0F, theme.Accent);
+    }
+
+    add_text({{bounds.Min.X + 8.0F * scale, bounds.Min.Y}, bounds.Max}, label, text_color);
+
+    return activated;
+}
+
 bool BeginWindow(std::string_view Title)
 {
     ensure_layout();
@@ -714,7 +847,7 @@ bool BeginWindow(std::string_view Title)
     add_filled_rect({{current_title_bounds.Min.X, current_title_bounds.Max.Y - 4.0F * scale}, current_title_bounds.Max}, Hovered ? theme.WindowTitleActive : theme.WindowTitle);
     add_hline(bounds.Min.X, bounds.Max.X, current_title_bounds.Max.Y, {theme.WindowBorder.R, theme.WindowBorder.G, theme.WindowBorder.B, 0.70F});
     add_soft_outline(bounds, 4.0F * scale, theme.WindowBorder);
-    add_text({{current_title_bounds.Min.X + 10.0F * scale, current_title_bounds.Min.Y + 10.0F * scale}, current_title_bounds.Max}, Title, theme.Text);
+    add_text({{current_title_bounds.Min.X + 10.0F * scale, current_title_bounds.Min.Y}, current_title_bounds.Max}, Title, theme.Text);
 
     const float VisibleHeight = scroll_clip.Max.Y - scroll_clip.Min.Y;
     const float MaxScroll = std::max(0.0F, state.ContentHeight - VisibleHeight);

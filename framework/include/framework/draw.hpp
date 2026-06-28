@@ -29,25 +29,40 @@ struct Color {
     {
     }
 
-    static constexpr Color Rgb(float red, float green, float blue)
+    static constexpr Color Rgb(int red, int green, int blue)
     {
-        return {red, green, blue};
+        return Rgba(red, green, blue, 255);
     }
 
-    static constexpr Color Rgba(float red, float green, float blue, float alpha)
+    static constexpr Color Rgba(int red, int green, int blue, int alpha = 255)
     {
-        return {red, green, blue, alpha};
+        return {
+            byte_channel(red),
+            byte_channel(green),
+            byte_channel(blue),
+            byte_channel(alpha),
+        };
     }
 
     static constexpr Color FromBytes(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255)
     {
-        constexpr float scale = 1.0F / 255.0F;
-        return {
-            static_cast<float>(red) * scale,
-            static_cast<float>(green) * scale,
-            static_cast<float>(blue) * scale,
-            static_cast<float>(alpha) * scale,
-        };
+        return Rgba(red, green, blue, alpha);
+    }
+
+    static constexpr Color RgbF(float red, float green, float blue)
+    {
+        return {red, green, blue};
+    }
+
+    static constexpr Color RgbaF(float red, float green, float blue, float alpha)
+    {
+        return {red, green, blue, alpha};
+    }
+
+private:
+    static constexpr float byte_channel(int value)
+    {
+        return static_cast<float>(value < 0 ? 0 : value > 255 ? 255 : value) / 255.0F;
     }
 };
 

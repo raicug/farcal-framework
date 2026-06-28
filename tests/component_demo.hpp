@@ -21,6 +21,7 @@ struct ComponentDemoState {
     float FrameScale {1.0F};
     float WindowHeight {412.0F};
     int SampleCount {32};
+    int SelectedAsset {};
     int DirectClicks {};
     int CallbackClicks {};
 };
@@ -109,13 +110,13 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
 
             Spacing();
             SectionText("Style Stack");
-            PushStyleColor(StyleColor::Text, state.PrimaryEnabled ? Color::FromBytes(82, 210, 115) : Color::FromBytes(232, 178, 76));
+            PushStyleColor(StyleColor::Text, state.PrimaryEnabled ? Color::Rgb(82, 210, 115) : Color::Rgb(232, 178, 76));
             Text(state.PrimaryEnabled ? "Primary feature is enabled" : "Primary feature is disabled");
             PopStyleColor();
 
-            PushStyleColor(StyleColor::Button, Color::Rgb(0.125F, 0.070F, 0.065F));
-            PushStyleColor(StyleColor::ButtonHovered, Color::Rgb(0.190F, 0.090F, 0.080F));
-            PushStyleColor(StyleColor::ButtonActive, Color::Rgb(0.245F, 0.105F, 0.090F));
+            PushStyleColor(StyleColor::Button, Color::Rgb(32, 18, 17));
+            PushStyleColor(StyleColor::ButtonHovered, Color::Rgb(48, 23, 20));
+            PushStyleColor(StyleColor::ButtonActive, Color::Rgb(62, 27, 23));
             Button("Styled Button", [&] {
                 ++state.CallbackClicks;
             });
@@ -125,11 +126,11 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
 
             Spacing();
             SectionText("Status");
-            PushStyleColor(StyleColor::Text, Color::FromBytes(82, 210, 115));
+            PushStyleColor(StyleColor::Text, Color::Rgb(82, 210, 115));
             Text(fpsText);
             PopStyleColor();
 
-            PushStyleColor(StyleColor::Text, Color::FromBytes(184, 192, 204));
+            PushStyleColor(StyleColor::Text, Color::Rgb(184, 192, 204));
             Text(frameText);
             Text(drawText);
             Text(memoryText);
@@ -151,6 +152,21 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
             Unindent(12.0F);
             EndGroup();
 
+            Spacing();
+            SectionText("List");
+            List("Asset List", [&] {
+                for (int index = 0; index < 8; ++index) {
+                    char label[64] {};
+                    std::snprintf(label, sizeof(label), "%.*s_ListItem_%02d", static_cast<int>(assetPrefix.size()), assetPrefix.data(), index + 1);
+
+                    PushId(&index);
+                    if (ListItem(label, state.SelectedAsset == index)) {
+                        state.SelectedAsset = index;
+                    }
+                    PopId();
+                }
+            }, {0.0F, 224.0F * state.FrameScale});
+
             PushId("asset-list");
             Spacing();
             SectionText("Scrollable Assets");
@@ -161,7 +177,7 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                 std::snprintf(label, sizeof(label), "%.*s_TestAsset_%02d", static_cast<int>(assetPrefix.size()), assetPrefix.data(), index + 1);
 
                 if (index == 3 || index == 11 || index == 17) {
-                    PushStyleColor(StyleColor::Text, Color::FromBytes(232, 178, 76));
+                    PushStyleColor(StyleColor::Text, Color::Rgb(232, 178, 76));
                     Text(label);
                     PopStyleColor();
                 } else {

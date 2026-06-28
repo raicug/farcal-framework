@@ -31,6 +31,9 @@ bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
 bool Checkbox(std::string_view label, bool* value);
 bool SliderFloat(std::string_view label, float* value, float minimum, float maximum);
+bool BeginList(std::string_view label, Vec2 size = {});
+void EndList();
+bool ListItem(std::string_view label, bool selected = false);
 bool BeginWindow(std::string_view Title);
 void EndWindow();
 
@@ -107,6 +110,16 @@ void Group(Callback&& callback)
     BeginGroup();
     callback();
     EndGroup();
+}
+
+template <std::invocable Callback>
+void List(std::string_view label, Callback&& callback, Vec2 size = {})
+{
+    if (BeginList(label, size)) {
+        callback();
+    }
+
+    EndList();
 }
 
 }

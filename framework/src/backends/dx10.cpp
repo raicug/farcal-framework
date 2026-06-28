@@ -704,7 +704,7 @@ IDWriteTextFormat* Dx10Renderer::TextFormat(const DrawCommand& command)
 
     format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
     format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-    format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+    format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
     TextFormatCache_.push_back({
         .family = family,
