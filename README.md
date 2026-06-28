@@ -2,7 +2,7 @@
 
 Farcal is an early-stage C++20 UI framework project.
 
-The repository currently contains the framework core, a Win32 window layer, DirectX 10 and DirectX 11 backends, and smoke tests that exercise the immediate-mode API.
+The repository currently contains the framework core, a Win32 window layer, DirectX 9, DirectX 10, and DirectX 11 backends, and smoke tests that exercise the immediate-mode API.
 
 This project is not production-ready yet. The public framework API is intentionally small while the core rendering and UI layers are being built.
 
@@ -29,9 +29,11 @@ This project is not production-ready yet. The public framework API is intentiona
 - Mouse-wheel scrolling inside UI panels
 - Clipped draw commands for scrollable content
 - Middle and side mouse button input for keybind capture
-- DX10 and DX11 backends with dynamic indexed buffers, scissor batches, resize handling, and cached DirectWrite text formats
+- DX9, DX10, and DX11 backends with scissor batches and resize handling
+- DX10 and DX11 backends use dynamic indexed buffers and cached DirectWrite text formats
+- DX9 backend uses fixed-function transformed vertices and a GDI text path
 - CMake-based build with Ninja presets
-- Windows smoke test executables: `dx10-window-test`, `dx11-window-test`
+- Windows smoke test executables: `dx9-window-test`, `dx10-window-test`, `dx11-window-test`
 
 ## Repository layout
 
@@ -49,6 +51,9 @@ This project is not production-ready yet. The public framework API is intentiona
 `-- tests/
     |-- component_demo.hpp
     |-- CMakeLists.txt
+    |-- dx9-window-test/
+    |   |-- CMakeLists.txt
+    |   `-- main.cpp
     |-- dx10-window-test/
     |   |-- CMakeLists.txt
     |   `-- main.cpp
@@ -63,7 +68,7 @@ This project is not production-ready yet. The public framework API is intentiona
 - A C++20 compiler
 - Ninja, when using the provided presets
 - Windows SDK
-- DirectX 10 and 11 system libraries (`d3d10_1`, `d3d11`, `dxgi`, `dxguid`)
+- DirectX 9, 10, and 11 system libraries (`d3d9`, `d3d10_1`, `d3d11`, `dxgi`, `dxguid`)
 
 The included DirectX tests are Windows-only.
 
@@ -103,6 +108,7 @@ After a debug build:
 ```sh
 bin/ninja/debug/dx11-window-test.exe
 bin/ninja/debug/dx10-window-test.exe
+bin/ninja/debug/dx9-window-test.exe
 ```
 
 After a release build:
@@ -110,6 +116,7 @@ After a release build:
 ```sh
 bin/ninja/release/dx11-window-test.exe
 bin/ninja/release/dx10-window-test.exe
+bin/ninja/release/dx9-window-test.exe
 ```
 
 Each test opens a 1280x720 Win32 window and renders the same immediate-mode UI through one backend. They are useful as quick checks that the framework target links correctly and that the local Windows/DirectX toolchain is working.
