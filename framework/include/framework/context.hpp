@@ -13,46 +13,43 @@
 
 namespace farcal {
 
-struct ContextConfig {
-};
+struct ContextConfig {};
 
 struct Statistics {
-    double DeltaSeconds {};
-    double FrameSeconds {};
-    double FramesPerSecond {};
-    std::uint64_t FrameIndex {};
-    std::size_t DrawCommandCount {};
-    std::size_t BackgroundCommandCount {};
-    std::size_t MainCommandCount {};
-    std::size_t ForegroundCommandCount {};
-    std::size_t MemoryWorkingSet {};
-    std::size_t MemoryPrivate {};
+  double DeltaSeconds{};
+  double FrameSeconds{};
+  double FramesPerSecond{};
+  std::uint64_t FrameIndex{};
+  std::size_t DrawCommandCount{};
+  std::size_t BackgroundCommandCount{};
+  std::size_t MainCommandCount{};
+  std::size_t ForegroundCommandCount{};
+  std::size_t MemoryWorkingSet{};
+  std::size_t MemoryPrivate{};
 };
 
-void CreateContext(const ContextConfig& config = {});
+void CreateContext(const ContextConfig &config = {});
 void DestroyContext();
 bool HasContext();
-void BeginFrame(const InputState& Input = {});
+void BeginFrame(const InputState &Input = {});
 void EndFrame();
 void SetMaxFps(float value);
 float MaxFps();
 void LimitFrameRate();
-const InputState& Input();
-const DrawData& Draw();
-const Statistics& Stats();
-DrawData& BackgroundRenderer();
-DrawData& ForegroundRenderer();
-DrawData& MainRenderer();
+const InputState &Input();
+const DrawData &Draw();
+const Statistics &Stats();
+DrawData &BackgroundRenderer();
+DrawData &ForegroundRenderer();
+DrawData &MainRenderer();
 void PushId(std::string_view value);
-void PushId(const void* value);
+void PushId(const void *value);
 void PopId();
 std::uint64_t CurrentId(std::string_view value);
 std::uint64_t FrameIndex();
 
-template <std::invocable Callback>
-void Frame(Callback&& callback)
-{
-    callback();
+template <std::invocable Callback> void Frame(Callback &&callback) {
+  callback();
 }
 
-}
+} // namespace farcal

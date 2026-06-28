@@ -9,91 +9,86 @@
 namespace farcal {
 
 struct Vec2 {
-    float X {};
-    float Y {};
+  float X{};
+  float Y{};
 };
 
 struct Color {
-    float R {};
-    float G {};
-    float B {};
-    float A {1.0F};
+  float R{};
+  float G{};
+  float B{};
+  float A{1.0F};
 
-    constexpr Color() = default;
+  constexpr Color() = default;
 
-    constexpr Color(float red, float green, float blue, float alpha = 1.0F)
-        : R(red)
-        , G(green)
-        , B(blue)
-        , A(alpha)
-    {
-    }
+  constexpr Color(float red, float green, float blue, float alpha = 1.0F)
+      : R(red), G(green), B(blue), A(alpha) {}
 
-    static constexpr Color Rgb(int red, int green, int blue)
-    {
-        return Rgba(red, green, blue, 255);
-    }
+  static constexpr Color Rgb(int red, int green, int blue) {
+    return Rgba(red, green, blue, 255);
+  }
 
-    static constexpr Color Rgba(int red, int green, int blue, int alpha = 255)
-    {
-        return {
-            byte_channel(red),
-            byte_channel(green),
-            byte_channel(blue),
-            byte_channel(alpha),
-        };
-    }
+  static constexpr Color Rgba(int red, int green, int blue, int alpha = 255) {
+    return {
+        byte_channel(red),
+        byte_channel(green),
+        byte_channel(blue),
+        byte_channel(alpha),
+    };
+  }
 
-    static constexpr Color FromBytes(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255)
-    {
-        return Rgba(red, green, blue, alpha);
-    }
+  static constexpr Color FromBytes(unsigned char red, unsigned char green,
+                                   unsigned char blue,
+                                   unsigned char alpha = 255) {
+    return Rgba(red, green, blue, alpha);
+  }
 
-    static constexpr Color RgbF(float red, float green, float blue)
-    {
-        return {red, green, blue};
-    }
+  static constexpr Color RgbF(float red, float green, float blue) {
+    return {red, green, blue};
+  }
 
-    static constexpr Color RgbaF(float red, float green, float blue, float alpha)
-    {
-        return {red, green, blue, alpha};
-    }
+  static constexpr Color RgbaF(float red, float green, float blue,
+                               float alpha) {
+    return {red, green, blue, alpha};
+  }
 
 private:
-    static constexpr float byte_channel(int value)
-    {
-        return static_cast<float>(value < 0 ? 0 : value > 255 ? 255 : value) / 255.0F;
-    }
+  static constexpr float byte_channel(int value) {
+    return static_cast<float>(value < 0     ? 0
+                              : value > 255 ? 255
+                                            : value) /
+           255.0F;
+  }
 };
 
 struct Rect {
-    Vec2 Min {};
-    Vec2 Max {};
+  Vec2 Min{};
+  Vec2 Max{};
 };
 
 enum class DrawCommandType {
-    FilledRect,
-    Rect,
-    Line,
-    Text,
+  FilledRect,
+  Rect,
+  Line,
+  Text,
 };
 
 struct DrawCommand {
-    DrawCommandType Type {};
-    Rect Bounds {};
-    Rect Clip {};
-    Vec2 Start {};
-    Vec2 End {};
-    Color Tint {};
-    float Thickness {1.0F};
-    float AntiAliasing {1.0F};
-    float FontSize {16.0F};
-    std::string Text {};
-    std::wstring FontFamily {};
+  DrawCommandType Type{};
+  Rect Bounds{};
+  Rect Clip{};
+  Vec2 Start{};
+  Vec2 End{};
+  Color Tint{};
+  float Thickness{1.0F};
+  float AntiAliasing{1.0F};
+  float FontSize{16.0F};
+  std::string Text{};
+  std::wstring FontFamily{};
 };
 
 struct DrawData {
-    std::vector<DrawCommand> Commands {};
+  std::vector<DrawCommand> Commands{};
 };
 
-}
+} // namespace farcal

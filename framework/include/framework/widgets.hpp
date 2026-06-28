@@ -32,19 +32,22 @@ void Tooltip(std::string_view value);
 void SetTooltip(std::string_view value);
 bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
-bool Checkbox(std::string_view label, bool* value);
-bool SliderFloat(std::string_view label, float* value, float minimum, float maximum, std::string_view suffix = {});
-bool ColorEdit(std::string_view label, Color* value);
-bool Dropdown(std::string_view label, int* selected, const char* const* items, int item_count);
-bool InputText(std::string_view label, char* buffer, std::size_t buffer_size);
+bool Checkbox(std::string_view label, bool *value);
+bool SliderFloat(std::string_view label, float *value, float minimum,
+                 float maximum, std::string_view suffix = {});
+bool ColorEdit(std::string_view label, Color *value);
+bool Dropdown(std::string_view label, int *selected, const char *const *items,
+              int item_count);
+bool InputText(std::string_view label, char *buffer, std::size_t buffer_size);
 bool IsTextInputFocused();
 enum class KeybindMode {
-    Toggle,
-    Hold,
+  Toggle,
+  Hold,
 };
-bool Keybind(std::string_view label, int* value);
-bool Keybind(std::string_view label, int* value, KeybindMode* mode);
-bool BeginTabs(std::string_view label, int* selected, const char* const* tabs, int tab_count);
+bool Keybind(std::string_view label, int *value);
+bool Keybind(std::string_view label, int *value, KeybindMode *mode);
+bool BeginTabs(std::string_view label, int *selected, const char *const *tabs,
+               int tab_count);
 void EndTabs();
 bool BeginList(std::string_view label, Vec2 size = {});
 void EndList();
@@ -54,100 +57,92 @@ void EndWindow();
 
 namespace widget_internal {
 
-bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral, std::string_view suffix);
+bool SliderScalar(std::string_view label, double *value, double minimum,
+                  double maximum, bool integral, std::string_view suffix);
 
 }
 
 template <typename Value>
-concept SliderValue = (std::integral<Value> || std::floating_point<Value>) && !std::same_as<std::remove_cv_t<Value>, bool>;
+concept SliderValue = (std::integral<Value> || std::floating_point<Value>) &&
+                      !std::same_as<std::remove_cv_t<Value>, bool>;
 
 template <SliderValue Value>
-bool Slider(std::string_view label, Value* value, Value minimum, Value maximum, std::string_view suffix = {})
-{
-    if (value == nullptr) {
-        return false;
-    }
+bool Slider(std::string_view label, Value *value, Value minimum, Value maximum,
+            std::string_view suffix = {}) {
+  if (value == nullptr) {
+    return false;
+  }
 
-    double scalar = static_cast<double>(*value);
-    const bool changed = widget_internal::SliderScalar(
-        label,
-        &scalar,
-        static_cast<double>(minimum),
-        static_cast<double>(maximum),
-        std::integral<Value>,
-        suffix);
+  double scalar = static_cast<double>(*value);
+  const bool changed = widget_internal::SliderScalar(
+      label, &scalar, static_cast<double>(minimum),
+      static_cast<double>(maximum), std::integral<Value>, suffix);
 
-    if (!changed) {
-        return false;
-    }
+  if (!changed) {
+    return false;
+  }
 
-    if constexpr (std::integral<Value>) {
-        *value = static_cast<Value>(std::llround(scalar));
-    } else {
-        *value = static_cast<Value>(scalar);
-    }
+  if constexpr (std::integral<Value>) {
+    *value = static_cast<Value>(std::llround(scalar));
+  } else {
+    *value = static_cast<Value>(scalar);
+  }
 
-    return true;
+  return true;
 }
 
 template <std::size_t Count>
-bool Dropdown(std::string_view label, int* selected, const char* const (&items)[Count])
-{
-    return Dropdown(label, selected, items, static_cast<int>(Count));
+bool Dropdown(std::string_view label, int *selected,
+              const char *const (&items)[Count]) {
+  return Dropdown(label, selected, items, static_cast<int>(Count));
 }
 
 template <std::size_t Count>
-bool BeginTabs(std::string_view label, int* selected, const char* const (&tabs)[Count])
-{
-    return BeginTabs(label, selected, tabs, static_cast<int>(Count));
+bool BeginTabs(std::string_view label, int *selected,
+               const char *const (&tabs)[Count]) {
+  return BeginTabs(label, selected, tabs, static_cast<int>(Count));
 }
 
 template <std::invocable Callback>
-bool Button(std::string_view label, Callback&& callback)
-{
-    const bool clicked = Button(label);
-    if (clicked) {
-        callback();
-    }
-    return clicked;
-}
-
-template <std::invocable Callback>
-bool PrimaryButton(std::string_view label, Callback&& callback)
-{
-    const bool clicked = PrimaryButton(label);
-    if (clicked) {
-        callback();
-    }
-    return clicked;
-}
-
-template <std::invocable Callback>
-void WindowPanel(std::string_view Title, Callback&& callback)
-{
-    if (BeginWindow(Title)) {
-        callback();
-    }
-
-    EndWindow();
-}
-
-template <std::invocable Callback>
-void Group(Callback&& callback)
-{
-    BeginGroup();
+bool Button(std::string_view label, Callback &&callback) {
+  const bool clicked = Button(label);
+  if (clicked) {
     callback();
-    EndGroup();
+  }
+  return clicked;
 }
 
 template <std::invocable Callback>
-void List(std::string_view label, Callback&& callback, Vec2 size = {})
-{
-    if (BeginList(label, size)) {
-        callback();
-    }
-
-    EndList();
+bool PrimaryButton(std::string_view label, Callback &&callback) {
+  const bool clicked = PrimaryButton(label);
+  if (clicked) {
+    callback();
+  }
+  return clicked;
 }
 
+template <std::invocable Callback>
+void WindowPanel(std::string_view Title, Callback &&callback) {
+  if (BeginWindow(Title)) {
+    callback();
+  }
+
+  EndWindow();
 }
+
+template <std::invocable Callback> void Group(Callback &&callback) {
+  BeginGroup();
+  callback();
+  EndGroup();
+}
+
+template <std::invocable Callback>
+void List(std::string_view label, Callback &&callback, Vec2 size = {}) {
+  if (BeginList(label, size)) {
+    callback();
+  }
+
+  EndList();
+}
+
+} // namespace farcal

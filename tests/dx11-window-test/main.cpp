@@ -7,58 +7,62 @@
 #include <exception>
 // clang-format on
 
-int main()
-{
-    try {
-        farcal::CreateContext();
+int main() {
+  try {
+    farcal::CreateContext();
 
-        farcal::Window Window({
-            .Title = L"Farcal DX11 Test",
-            .Width = 1280,
-            .Height = 720,
-        });
+    farcal::Window Window({
+        .Title = L"Farcal DX11 Test",
+        .Width = 1280,
+        .Height = 720,
+    });
 
-        Window.SetWndProcHook([](HWND, UINT message, WPARAM, LPARAM) -> std::optional<LRESULT> {
-            if (message == WM_SETCURSOR) {
-                return std::nullopt;
-            }
-
+    Window.SetWndProcHook(
+        [](HWND, UINT message, WPARAM, LPARAM) -> std::optional<LRESULT> {
+          if (message == WM_SETCURSOR) {
             return std::nullopt;
+          }
+
+          return std::nullopt;
         });
 
-        farcal::Dx11Renderer renderer(Window);
-        farcal::tests::ComponentDemoState demo;
-        farcal::SetMaxFps(demo.MaximumFps);
+    farcal::Dx11Renderer renderer(Window);
+    farcal::tests::ComponentDemoState demo;
+    farcal::SetMaxFps(demo.MaximumFps);
 
-        while (Window.PollEvents()) {
-            farcal::BeginFrame(Window.ConsumeInput());
+    while (Window.PollEvents()) {
+      farcal::BeginFrame(Window.ConsumeInput());
 
-            farcal::BackgroundRenderer().Commands.push_back({
-                .Type = farcal::DrawCommandType::FilledRect,
-                .Bounds = {{0.0F, 0.0F}, {static_cast<float>(Window.Width()), static_cast<float>(Window.Height())}},
-                .Tint = {0.055F, 0.055F, 0.064F, 1.0F},
-            });
+      farcal::BackgroundRenderer().Commands.push_back({
+          .Type = farcal::DrawCommandType::FilledRect,
+          .Bounds = {{0.0F, 0.0F},
+                     {static_cast<float>(Window.Width()),
+                      static_cast<float>(Window.Height())}},
+          .Tint = {0.055F, 0.055F, 0.064F, 1.0F},
+      });
 
-            farcal::tests::RenderComponentDemo(demo, Window, "DirectX 11", "DX11");
+      farcal::tests::RenderComponentDemo(demo, Window, "DirectX 11", "DX11");
 
-            farcal::ForegroundRenderer().Commands.push_back({
-                .Type = farcal::DrawCommandType::Rect,
-                .Bounds = {{8.0F, 8.0F}, {static_cast<float>(Window.Width()) - 8.0F, static_cast<float>(Window.Height()) - 8.0F}},
-                .Tint = {1.0F, 1.0F, 1.0F, 0.035F},
-            });
+      farcal::ForegroundRenderer().Commands.push_back({
+          .Type = farcal::DrawCommandType::Rect,
+          .Bounds = {{8.0F, 8.0F},
+                     {static_cast<float>(Window.Width()) - 8.0F,
+                      static_cast<float>(Window.Height()) - 8.0F}},
+          .Tint = {1.0F, 1.0F, 1.0F, 0.035F},
+      });
 
-            farcal::EndFrame();
-            renderer.Render(farcal::Draw());
-            renderer.Present(demo.Vsync);
-            farcal::LimitFrameRate();
-        }
-
-        farcal::DestroyContext();
-    } catch (const std::exception& error) {
-        std::fprintf(stderr, "%s\n", error.what());
-        farcal::DestroyContext();
-        return 1;
+      farcal::EndFrame();
+      renderer.Render(farcal::Draw());
+      renderer.Present(demo.Vsync);
+      farcal::LimitFrameRate();
     }
 
-    return 0;
+    farcal::DestroyContext();
+  } catch (const std::exception &error) {
+    std::fprintf(stderr, "%s\n", error.what());
+    farcal::DestroyContext();
+    return 1;
+  }
+
+  return 0;
 }

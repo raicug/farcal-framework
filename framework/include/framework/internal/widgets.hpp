@@ -11,54 +11,54 @@
 namespace farcal::widget_internal {
 
 struct layout_state {
-    Vec2 Cursor {24.0F, 24.0F};
-    float StartX {24.0F};
-    float ContentWidth {};
-    Rect Clip {};
-    bool HasClip {};
-    Rect LastItem {};
-    bool HasLastItem {};
-    float LineBottom {};
-    float NextItemWidth {};
-    float IndentWidth {};
-    float ItemSpacingY {-1.0F};
+  Vec2 Cursor{24.0F, 24.0F};
+  float StartX{24.0F};
+  float ContentWidth{};
+  Rect Clip{};
+  bool HasClip{};
+  Rect LastItem{};
+  bool HasLastItem{};
+  float LineBottom{};
+  float NextItemWidth{};
+  float IndentWidth{};
+  float ItemSpacingY{-1.0F};
 };
 
 struct window_state {
-    Vec2 Position {};
-    Vec2 DragOffset {};
-    float ContentHeight {};
-    float ScrollY {};
-    bool Initialized {};
-    bool Dragging {};
+  Vec2 Position{};
+  Vec2 DragOffset{};
+  float ContentHeight{};
+  float ScrollY{};
+  bool Initialized{};
+  bool Dragging{};
 };
 
 struct window_layout_state {
-    std::string Title {};
-    float ContentStartY {};
-    float ContentPaddingY {};
-    float VisibleHeight {};
-    float MaxScroll {};
-    bool Hovered {};
-    Rect ScrollTrack {};
+  std::string Title{};
+  float ContentStartY{};
+  float ContentPaddingY{};
+  float VisibleHeight{};
+  float MaxScroll{};
+  bool Hovered{};
+  Rect ScrollTrack{};
 };
 
 struct group_state {
-    layout_state Parent {};
+  layout_state Parent{};
 };
 
 struct list_state {
-    layout_state Parent {};
-    Rect Bounds {};
-    std::uint64_t Id {};
-    bool Hovered {};
+  layout_state Parent{};
+  Rect Bounds{};
+  std::uint64_t Id{};
+  bool Hovered{};
 };
 
 struct item_result {
-    bool Hovered {};
-    bool Active {};
-    bool Focused {};
-    bool Clicked {};
+  bool Hovered{};
+  bool Active{};
+  bool Focused{};
+  bool Clicked{};
 };
 
 extern layout_state layout;
@@ -77,7 +77,7 @@ extern bool last_active;
 extern bool last_focused;
 
 void ensure_layout();
-DrawData& mutable_draw();
+DrawData &mutable_draw();
 bool contains(Rect bounds, Vec2 point);
 Rect intersect(Rect a, Rect b);
 bool has_area(Rect value);
@@ -93,7 +93,8 @@ item_result item_behavior(std::uint64_t id, Rect bounds);
 bool keyboard_toggle(std::uint64_t id);
 double normalized_value(double value, double minimum, double maximum);
 double value_from_normalized(double value, double minimum, double maximum);
-bool set_scalar_value(double* target, double value, double minimum, double maximum, bool integral);
+bool set_scalar_value(double *target, double value, double minimum,
+                      double maximum, bool integral);
 void add_text(Rect bounds, std::string_view value, Color tint);
 void add_filled_rect(Rect bounds, Color tint);
 void add_rect(Rect bounds, Color tint, float thickness = 1.0F);
@@ -102,7 +103,9 @@ void add_hline(float x0, float x1, float y, Color tint);
 void add_vline(float x, float y0, float y1, Color tint);
 void add_soft_rect(Rect bounds, float radius, Color tint);
 void add_soft_outline(Rect bounds, float radius, Color tint);
-bool button_impl(std::string_view label, Color normal, Color hovered_color, Color active_color, Color text_color);
-void format_slider_value(char* buffer, std::size_t buffer_size, double value, bool integral, std::string_view suffix);
+bool button_impl(std::string_view label, Color normal, Color hovered_color,
+                 Color active_color, Color text_color);
+void format_slider_value(char *buffer, std::size_t buffer_size, double value,
+                         bool integral, std::string_view suffix);
 
-}
+} // namespace farcal::widget_internal
