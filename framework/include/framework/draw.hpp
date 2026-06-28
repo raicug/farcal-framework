@@ -18,6 +18,37 @@ struct Color {
     float G {};
     float B {};
     float A {1.0F};
+
+    constexpr Color() = default;
+
+    constexpr Color(float red, float green, float blue, float alpha = 1.0F)
+        : R(red)
+        , G(green)
+        , B(blue)
+        , A(alpha)
+    {
+    }
+
+    static constexpr Color Rgb(float red, float green, float blue)
+    {
+        return {red, green, blue};
+    }
+
+    static constexpr Color Rgba(float red, float green, float blue, float alpha)
+    {
+        return {red, green, blue, alpha};
+    }
+
+    static constexpr Color FromBytes(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255)
+    {
+        constexpr float scale = 1.0F / 255.0F;
+        return {
+            static_cast<float>(red) * scale,
+            static_cast<float>(green) * scale,
+            static_cast<float>(blue) * scale,
+            static_cast<float>(alpha) * scale,
+        };
+    }
 };
 
 struct Rect {

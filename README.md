@@ -11,11 +11,11 @@ This project is not production-ready yet. The public framework API is intentiona
 - C++20 static library target: `farcal::framework`
 - Public include root: `framework/include`
 - Immediate-mode frame API: `farcal::Frame(...)`
-- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`
+- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Slider<T>(...)`
 - Text hierarchy: `farcal::TitleText(...)`, `farcal::SectionText(...)`, `farcal::TextSecondary(...)`
 - Primary actions: `farcal::PrimaryButton(...)`
 - ImGui-style UI windows: `farcal::WindowPanel(...)`
-- Style stack: `farcal::PushStyleColor(...)`, `farcal::PushStyleVar(...)`
+- Style stack: `farcal::PushStyleColor(..., farcal::Color::Rgb(...))`, `farcal::PushStyleVar(...)`
 - Draw layers: `farcal::BackgroundRenderer()`, `farcal::MainRenderer()`, `farcal::ForegroundRenderer()`
 - ID stack: `farcal::PushId(...)`, `farcal::PopId()`, `farcal::CurrentId(...)`
 - Win32 window wrapper with WndProc hook support
@@ -39,6 +39,7 @@ This project is not production-ready yet. The public framework API is intentiona
 |   |-- src/backends/
 |   `-- src/win32/
 `-- tests/
+    |-- component_demo.hpp
     |-- CMakeLists.txt
     |-- dx10-window-test/
     |   |-- CMakeLists.txt
@@ -145,7 +146,7 @@ while (Window.PollEvents()) {
     farcal::BackgroundRenderer().Commands.push_back({
         .Type = farcal::DrawCommandType::FilledRect,
         .Bounds = {{0.0F, 0.0F}, {1280.0F, 720.0F}},
-        .Tint = {0.055F, 0.055F, 0.064F, 1.0F},
+        .Tint = farcal::Color::Rgb(0.055F, 0.055F, 0.064F),
     });
 
     farcal::Frame([&] {
@@ -155,6 +156,13 @@ while (Window.PollEvents()) {
             farcal::Separator();
 
             farcal::SectionText("Scene");
+            static float Exposure = 1.0F;
+            farcal::Slider<float>("Exposure", &Exposure, 0.0F, 5.0F);
+
+            farcal::PushStyleColor(farcal::StyleColor::Text, farcal::Color::FromBytes(82, 210, 115));
+            farcal::Text("Ready");
+            farcal::PopStyleColor();
+
             farcal::PrimaryButton("Select Entity", [&] {
                 Window.CancelNextPoll();
             });

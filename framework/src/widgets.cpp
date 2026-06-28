@@ -4,6 +4,7 @@
 #include <framework/context.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <functional>
 #include <stdexcept>
@@ -206,23 +207,27 @@ bool keyboard_toggle(std::uint64_t id)
     return focused_item == id && (io.KeyPressed[13] || io.KeyPressed[32]);
 }
 
-float normalized_value(float value, float minimum, float maximum)
+double normalized_value(double value, double minimum, double maximum)
 {
     if (maximum <= minimum) {
-        return 0.0F;
+        return 0.0;
     }
 
-    return std::clamp((value - minimum) / (maximum - minimum), 0.0F, 1.0F);
+    return std::clamp((value - minimum) / (maximum - minimum), 0.0, 1.0);
 }
 
-float value_from_normalized(float value, float minimum, float maximum)
+double value_from_normalized(double value, double minimum, double maximum)
 {
-    return minimum + (maximum - minimum) * std::clamp(value, 0.0F, 1.0F);
+    return minimum + (maximum - minimum) * std::clamp(value, 0.0, 1.0);
 }
 
-bool set_float_value(float* target, float value, float minimum, float maximum)
+bool set_scalar_value(double* target, double value, double minimum, double maximum, bool integral)
 {
-    const float clamped = std::clamp(value, minimum, maximum);
+    double clamped = std::clamp(value, minimum, maximum);
+    if (integral) {
+        clamped = std::round(clamped);
+    }
+
     if (*target == clamped) {
         return false;
     }
@@ -557,7 +562,9 @@ bool Checkbox(std::string_view label, bool* value)
     return changed;
 }
 
-bool SliderFloat(std::string_view label, float* value, float minimum, float maximum)
+namespace detail {
+
+bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral)
 {
     ensure_layout();
     if (value == nullptr) {
@@ -584,21 +591,21 @@ bool SliderFloat(std::string_view label, float* value, float minimum, float maxi
     const float track_width = std::max(1.0F, track_end - track_start);
 
     if ((item.Active && io.MouseDown[0]) || item.Clicked) {
-        const float normalized = (io.MousePosition.X - track_start) / track_width;
-        changed = set_float_value(value, value_from_normalized(normalized, minimum, maximum), minimum, maximum);
+        const double normalized = static_cast<double>((io.MousePosition.X - track_start) / track_width);
+        changed = set_scalar_value(value, value_from_normalized(normalized, minimum, maximum), minimum, maximum, integral);
     }
 
     if (item.Focused) {
-        const float step = (maximum - minimum) / 100.0F;
+        const double step = integral ? std::max(1.0, std::round((maximum - minimum) / 100.0)) : (maximum - minimum) / 100.0;
         if (io.KeyPressed[37]) {
-            changed = set_float_value(value, *value - step, minimum, maximum) || changed;
+            changed = set_scalar_value(value, *value - step, minimum, maximum, integral) || changed;
         }
         if (io.KeyPressed[39]) {
-            changed = set_float_value(value, *value + step, minimum, maximum) || changed;
+            changed = set_scalar_value(value, *value + step, minimum, maximum, integral) || changed;
         }
     }
 
-    const float normalized = normalized_value(*value, minimum, maximum);
+    const float normalized = static_cast<float>(normalized_value(*value, minimum, maximum));
     const float thumb_x = track_start + track_width * normalized;
     const Color track_color = item.Hovered || item.Active ? theme.ButtonHovered : theme.Button;
     const Color progress_color = item.Active ? theme.ButtonPrimaryActive : item.Hovered ? theme.ButtonPrimaryHovered : theme.ButtonPrimary;
@@ -606,7 +613,11 @@ bool SliderFloat(std::string_view label, float* value, float minimum, float maxi
     const Color thumb_border = item.Focused ? theme.Accent : item.Hovered || item.Active ? Color {theme.Accent.R, theme.Accent.G, theme.Accent.B, 0.70F} : theme.ButtonBorder;
 
     char value_text[32] {};
-    std::snprintf(value_text, sizeof(value_text), "%.2f", static_cast<double>(*value));
+    if (integral) {
+        std::snprintf(value_text, sizeof(value_text), "%.0f", *value);
+    } else {
+        std::snprintf(value_text, sizeof(value_text), "%.2f", *value);
+    }
     const float value_width = text_width(value_text);
 
     add_text({bounds.Min, {bounds.Max.X - value_width - 10.0F * scale, bounds.Min.Y + 20.0F * scale}}, label, theme.TextSecondary);
@@ -618,6 +629,23 @@ bool SliderFloat(std::string_view label, float* value, float minimum, float maxi
     const Rect thumb {{thumb_x - 4.0F * scale, track_y - 8.0F * scale}, {thumb_x + 4.0F * scale, track_y + 8.0F * scale}};
     add_filled_rect({{thumb.Min.X + 1.0F, thumb.Min.Y + 1.0F}, {thumb.Max.X - 1.0F, thumb.Max.Y - 1.0F}}, thumb_fill);
     add_soft_outline(thumb, 0.0F, thumb_border);
+
+    return changed;
+}
+
+}
+
+bool SliderFloat(std::string_view label, float* value, float minimum, float maximum)
+{
+    if (value == nullptr) {
+        return false;
+    }
+
+    double scalar = static_cast<double>(*value);
+    const bool changed = detail::SliderScalar(label, &scalar, static_cast<double>(minimum), static_cast<double>(maximum), false);
+    if (changed) {
+        *value = static_cast<float>(scalar);
+    }
 
     return changed;
 }

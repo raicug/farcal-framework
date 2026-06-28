@@ -3,8 +3,10 @@
 // clang-format off
 #include <framework/draw.hpp>
 
+#include <cmath>
 #include <concepts>
 #include <string_view>
+#include <type_traits>
 // clang-format on
 
 namespace farcal {
@@ -31,6 +33,43 @@ bool Checkbox(std::string_view label, bool* value);
 bool SliderFloat(std::string_view label, float* value, float minimum, float maximum);
 bool BeginWindow(std::string_view Title);
 void EndWindow();
+
+namespace detail {
+
+bool SliderScalar(std::string_view label, double* value, double minimum, double maximum, bool integral);
+
+}
+
+template <typename Value>
+concept SliderValue = (std::integral<Value> || std::floating_point<Value>) && !std::same_as<std::remove_cv_t<Value>, bool>;
+
+template <SliderValue Value>
+bool Slider(std::string_view label, Value* value, Value minimum, Value maximum)
+{
+    if (value == nullptr) {
+        return false;
+    }
+
+    double scalar = static_cast<double>(*value);
+    const bool changed = detail::SliderScalar(
+        label,
+        &scalar,
+        static_cast<double>(minimum),
+        static_cast<double>(maximum),
+        std::integral<Value>);
+
+    if (!changed) {
+        return false;
+    }
+
+    if constexpr (std::integral<Value>) {
+        *value = static_cast<Value>(std::llround(scalar));
+    } else {
+        *value = static_cast<Value>(scalar);
+    }
+
+    return true;
+}
 
 template <std::invocable Callback>
 bool Button(std::string_view label, Callback&& callback)
