@@ -10,6 +10,7 @@ add_library(framework STATIC
     src/widgets/input.cpp
     src/widgets/layout.cpp
     src/widgets/lists.cpp
+    src/widgets/tabs.cpp
     src/widgets/text.cpp
     src/widgets/windows.cpp
     src/win32/window.cpp

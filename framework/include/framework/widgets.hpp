@@ -34,6 +34,8 @@ bool Checkbox(std::string_view label, bool* value);
 bool SliderFloat(std::string_view label, float* value, float minimum, float maximum, std::string_view suffix = {});
 bool Dropdown(std::string_view label, int* selected, const char* const* items, int item_count);
 bool InputText(std::string_view label, char* buffer, std::size_t buffer_size);
+bool BeginTabs(std::string_view label, int* selected, const char* const* tabs, int tab_count);
+void EndTabs();
 bool BeginList(std::string_view label, Vec2 size = {});
 void EndList();
 bool ListItem(std::string_view label, bool selected = false);
@@ -82,6 +84,12 @@ template <std::size_t Count>
 bool Dropdown(std::string_view label, int* selected, const char* const (&items)[Count])
 {
     return Dropdown(label, selected, items, static_cast<int>(Count));
+}
+
+template <std::size_t Count>
+bool BeginTabs(std::string_view label, int* selected, const char* const (&tabs)[Count])
+{
+    return BeginTabs(label, selected, tabs, static_cast<int>(Count));
 }
 
 template <std::invocable Callback>

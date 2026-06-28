@@ -4,9 +4,6 @@
 
 namespace farcal {
 
-const char* Version()
-{
-    return "0.1.0";
-}
+const char *Version() { return "0.1.5"; }
 
-}
+} // namespace farcal
