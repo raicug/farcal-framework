@@ -11,17 +11,23 @@ This project is not production-ready yet. The public framework API is intentiona
 - C++20 static library target: `farcal::framework`
 - Public include root: `framework/include`
 - Immediate-mode frame API: `farcal::Frame(...)`
-- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Slider<T>(...)`, `farcal::ListItem(...)`
+- Basic widgets: `farcal::Text(...)`, `farcal::Button(...)`, `farcal::Checkbox(...)`, `farcal::Slider<T>(...)`
+- Inputs: `farcal::Dropdown(...)`, `farcal::InputText(...)`, `farcal::Keybind(...)`
+- Pickers and lists: `farcal::ColorEdit(...)`, `farcal::List(...)`, `farcal::ListItem(...)`
+- Tab bars: `farcal::BeginTabs(...)`, `farcal::EndTabs()`
 - Text hierarchy: `farcal::TitleText(...)`, `farcal::SectionText(...)`, `farcal::TextSecondary(...)`
 - Primary actions: `farcal::PrimaryButton(...)`
 - ImGui-style UI windows: `farcal::WindowPanel(...)`
 - Style stack: `farcal::PushStyleColor(..., farcal::Color::Rgb(...))`, `farcal::PushStyleVar(...)`
+- RGB color helpers use byte-style values such as `farcal::Color::Rgb(255, 255, 255)`
 - Draw layers: `farcal::BackgroundRenderer()`, `farcal::MainRenderer()`, `farcal::ForegroundRenderer()`
 - ID stack: `farcal::PushId(...)`, `farcal::PopId()`, `farcal::CurrentId(...)`
+- Text input focus helper: `farcal::IsTextInputFocused()`
 - Win32 window wrapper with WndProc hook support
 - Draggable UI panels
 - Mouse-wheel scrolling inside UI panels
 - Clipped draw commands for scrollable content
+- Middle and side mouse button input for keybind capture
 - DX10 and DX11 backends with dynamic indexed buffers, scissor batches, resize handling, and cached DirectWrite text formats
 - CMake-based build with Ninja presets
 - Windows smoke test executables: `dx10-window-test`, `dx11-window-test`
@@ -37,6 +43,7 @@ This project is not production-ready yet. The public framework API is intentiona
 |   |-- include/framework/
 |   |-- src/
 |   |-- src/backends/
+|   |-- src/widgets/
 |   `-- src/win32/
 `-- tests/
     |-- component_demo.hpp
@@ -159,9 +166,26 @@ while (Window.PollEvents()) {
             static float Exposure = 1.0F;
             farcal::Slider<float>("Exposure", &Exposure, 0.0F, 5.0F, "ev");
 
+            static bool Diagnostics = false;
+            farcal::Checkbox("Diagnostics", &Diagnostics);
+
+            static int RenderMode = 0;
+            const char* RenderModes[] {"Balanced", "Quality", "Performance"};
+            farcal::Dropdown("Render Mode", &RenderMode, RenderModes);
+
+            static char Search[64] {};
+            farcal::InputText("Search assets", Search, sizeof(Search));
+
+            static int ToggleKey = 45;
+            static farcal::KeybindMode ToggleMode = farcal::KeybindMode::Toggle;
+            farcal::Keybind("Toggle Menu", &ToggleKey, &ToggleMode);
+
             farcal::PushStyleColor(farcal::StyleColor::Text, farcal::Color::Rgb(82, 210, 115));
             farcal::Text("Ready");
             farcal::PopStyleColor();
+
+            static farcal::Color Accent = farcal::Color::Rgb(92, 139, 255);
+            farcal::ColorEdit("Accent", &Accent);
 
             static int SelectedItem = 0;
             farcal::List("Entities", [&] {
@@ -199,10 +223,20 @@ Calling `Window.CancelNextPoll()` makes the next `Window.PollEvents()` return `f
 
 The default text face is Inter through DirectWrite. If Inter is not installed on the system, DirectWrite will choose its normal fallback for that family.
 
+## Widget notes
+
+- `Slider<T>(...)` supports integral and floating-point values and accepts an optional suffix, for example `"px"` or `"fps"`.
+- `ColorEdit(...)` opens a draggable picker window with saturation/value, hue, alpha, and RGBA byte fields.
+- `Keybind(...)` stores keyboard virtual-key codes directly. Mouse buttons are stored as `256 + mouse_index`.
+- `Keybind(label, &key, &mode)` supports `KeybindMode::Toggle` and `KeybindMode::Hold`.
+- Right-click a keybind in the demo to switch between Toggle and Hold.
+- `InputText(...)` supports selection, clipboard copy/paste, repeat delete/backspace, `Ctrl+A`, and exits focus on `Esc`.
+
 ## Development notes
 
 - Keep public headers under `framework/include/framework/`.
 - Keep platform backends under `framework/src/backends/`.
+- Keep widget implementations under `framework/src/widgets/`.
 - Keep platform window code under `framework/src/win32/`.
 - Add executable smoke tests under `tests/<test-name>/`.
 - Prefer small, focused changes while the core API is still taking shape.
@@ -211,7 +245,7 @@ The default text face is Inter through DirectWrite. If Inter is not installed on
 ## Roadmap
 
 - Add a framework-owned font atlas for non-DirectWrite backends.
-- Add layout helpers.
+- Add more layout helpers.
 - Add more core widgets.
 - Add backend parity checks.
 - Add focused tests or examples for each public feature as it lands.
