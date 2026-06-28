@@ -248,6 +248,36 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam)
         ReleaseCapture();
         return 0;
 
+    case WM_MBUTTONDOWN:
+        Input_.MouseDown[2] = true;
+        Input_.MousePressed[2] = true;
+        SetCapture(Handle_);
+        return 0;
+
+    case WM_MBUTTONUP:
+        Input_.MouseDown[2] = false;
+        Input_.MouseReleased[2] = true;
+        ReleaseCapture();
+        return 0;
+
+    case WM_XBUTTONDOWN:
+    {
+        const std::size_t index = GET_XBUTTON_WPARAM(wparam) == XBUTTON1 ? 3 : 4;
+        Input_.MouseDown[index] = true;
+        Input_.MousePressed[index] = true;
+        SetCapture(Handle_);
+        return TRUE;
+    }
+
+    case WM_XBUTTONUP:
+    {
+        const std::size_t index = GET_XBUTTON_WPARAM(wparam) == XBUTTON1 ? 3 : 4;
+        Input_.MouseDown[index] = false;
+        Input_.MouseReleased[index] = true;
+        ReleaseCapture();
+        return TRUE;
+    }
+
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         if (wparam < Input_.KeyDown.size()) {

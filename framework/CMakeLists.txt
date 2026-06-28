@@ -9,6 +9,7 @@ add_library(framework STATIC
     src/widgets/colors.cpp
     src/widgets/controls.cpp
     src/widgets/input.cpp
+    src/widgets/keybinds.cpp
     src/widgets/layout.cpp
     src/widgets/lists.cpp
     src/widgets/tabs.cpp

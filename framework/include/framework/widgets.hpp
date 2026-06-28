@@ -35,6 +35,13 @@ bool SliderFloat(std::string_view label, float* value, float minimum, float maxi
 bool ColorEdit(std::string_view label, Color* value);
 bool Dropdown(std::string_view label, int* selected, const char* const* items, int item_count);
 bool InputText(std::string_view label, char* buffer, std::size_t buffer_size);
+bool IsTextInputFocused();
+enum class KeybindMode {
+    Toggle,
+    Hold,
+};
+bool Keybind(std::string_view label, int* value);
+bool Keybind(std::string_view label, int* value, KeybindMode* mode);
 bool BeginTabs(std::string_view label, int* selected, const char* const* tabs, int tab_count);
 void EndTabs();
 bool BeginList(std::string_view label, Vec2 size = {});

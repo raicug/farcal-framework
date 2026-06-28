@@ -370,6 +370,7 @@ bool InputText(std::string_view label, char* buffer, std::size_t buffer_size)
 
     if (focused && io.KeyPressed[27]) {
         widget_internal::focused_item = 0;
+        active_input.Id = 0;
         clear_selection();
     }
 
@@ -464,6 +465,11 @@ bool InputText(std::string_view label, char* buffer, std::size_t buffer_size)
     }
 
     return changed;
+}
+
+bool IsTextInputFocused()
+{
+    return active_input.Id != 0 && widget_internal::focused_item == active_input.Id;
 }
 
 }

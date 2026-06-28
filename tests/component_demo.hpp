@@ -27,9 +27,55 @@ struct ComponentDemoState {
     int ComponentTab {};
     int DirectClicks {};
     int CallbackClicks {};
+    int ToggleMenuKey {45};
+    KeybindMode ToggleMenuMode {KeybindMode::Toggle};
+    bool ToggleMenuEnabled {};
+    bool ToggleMenuWasDown {};
     Color AccentPreview {Color::Rgb(92, 139, 255)};
     char SearchText[64] {};
 };
+
+inline bool IsDemoBindingDown(int binding)
+{
+    const InputState& input = Input();
+    if (binding <= 0) {
+        return false;
+    }
+
+    if (binding >= 256) {
+        const int mouse = binding - 256;
+        return mouse >= 0 && mouse < static_cast<int>(input.MouseDown.size()) && input.MouseDown[static_cast<std::size_t>(mouse)];
+    }
+
+    return binding < static_cast<int>(input.KeyDown.size()) && input.KeyDown[static_cast<std::size_t>(binding)];
+}
+
+inline void UpdateDemoKeybindLog(ComponentDemoState& state)
+{
+    if (IsTextInputFocused()) {
+        state.ToggleMenuWasDown = false;
+        return;
+    }
+
+    const bool down = IsDemoBindingDown(state.ToggleMenuKey);
+
+    if (state.ToggleMenuMode == KeybindMode::Toggle) {
+        if (down && !state.ToggleMenuWasDown) {
+            state.ToggleMenuEnabled = !state.ToggleMenuEnabled;
+            std::printf("Toggle Menu %s\n", state.ToggleMenuEnabled ? "enabled" : "disabled");
+        }
+    } else {
+        if (down) {
+            state.ToggleMenuEnabled = true;
+            std::printf("Toggle Menu enabled\n");
+        } else if (state.ToggleMenuEnabled) {
+            state.ToggleMenuEnabled = false;
+            std::printf("Toggle Menu disabled\n");
+        }
+    }
+
+    state.ToggleMenuWasDown = down;
+}
 
 inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::string_view backendName, std::string_view assetPrefix)
 {
@@ -53,6 +99,7 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
     style.WindowHeight = state.WindowHeight;
     style.ItemSpacingY = state.CompactMode ? 5.0F : 8.0F;
     SetStyle(style);
+    UpdateDemoKeybindLog(state);
 
     Frame([&] {
         WindowPanel("Farcal Component Test", [&] {
@@ -110,6 +157,7 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                     const char* renderModes[] {"Balanced", "Quality", "Performance", "Diagnostics"};
                     Dropdown("Render Mode", &state.RenderMode, renderModes);
                     InputText("Search assets", state.SearchText, sizeof(state.SearchText));
+                    Keybind("Toggle Menu", &state.ToggleMenuKey, &state.ToggleMenuMode);
 
                     Spacing();
                     SectionText("Sliders");
