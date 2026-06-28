@@ -28,6 +28,8 @@ void SetNextItemWidth(float Width);
 bool IsItemHovered();
 bool IsItemActive();
 bool IsItemFocused();
+void Tooltip(std::string_view value);
+void SetTooltip(std::string_view value);
 bool Button(std::string_view label);
 bool PrimaryButton(std::string_view label);
 bool Checkbox(std::string_view label, bool* value);

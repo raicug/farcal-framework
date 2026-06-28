@@ -17,6 +17,7 @@ This project is not production-ready yet. The public framework API is intentiona
 - Tab bars: `farcal::BeginTabs(...)`, `farcal::EndTabs()`
 - Text hierarchy: `farcal::TitleText(...)`, `farcal::SectionText(...)`, `farcal::TextSecondary(...)`
 - Primary actions: `farcal::PrimaryButton(...)`
+- Tooltips: `farcal::Tooltip(...)`, `farcal::SetTooltip(...)`
 - ImGui-style UI windows: `farcal::WindowPanel(...)`
 - Style stack: `farcal::PushStyleColor(..., farcal::Color::Rgb(...))`, `farcal::PushStyleVar(...)`
 - RGB color helpers use byte-style values such as `farcal::Color::Rgb(255, 255, 255)`
@@ -179,6 +180,7 @@ while (Window.PollEvents()) {
             static int ToggleKey = 45;
             static farcal::KeybindMode ToggleMode = farcal::KeybindMode::Toggle;
             farcal::Keybind("Toggle Menu", &ToggleKey, &ToggleMode);
+            farcal::SetTooltip("Click to capture a key. Right-click for Toggle or Hold.");
 
             farcal::PushStyleColor(farcal::StyleColor::Text, farcal::Color::Rgb(82, 210, 115));
             farcal::Text("Ready");
@@ -231,6 +233,7 @@ The default text face is Inter through DirectWrite. If Inter is not installed on
 - `Keybind(label, &key, &mode)` supports `KeybindMode::Toggle` and `KeybindMode::Hold`.
 - Right-click a keybind in the demo to switch between Toggle and Hold.
 - `InputText(...)` supports selection, clipboard copy/paste, repeat delete/backspace, `Ctrl+A`, and exits focus on `Esc`.
+- `SetTooltip(...)` shows a foreground tooltip when the last item is hovered. `Tooltip(...)` draws one immediately.
 
 ## Development notes
 

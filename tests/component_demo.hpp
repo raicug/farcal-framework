@@ -167,12 +167,14 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                         state.PrimaryEnabled = !state.PrimaryEnabled;
                         ++state.CallbackClicks;
                     });
+                    SetTooltip("Toggles the primary action state and increments callback clicks.");
                     TextSecondary(IsItemActive() ? "Primary active" : IsItemHovered() ? "Primary hovered" : IsItemFocused() ? "Primary focused" : "Primary idle");
 
                     if (Button(state.TaskQueued ? "Task Queued" : "Queue Task")) {
                         state.TaskQueued = !state.TaskQueued;
                         ++state.DirectClicks;
                     }
+                    SetTooltip("Queues or clears a sample task using the direct button API.");
                     TextSecondary(IsItemActive() ? "Button active" : IsItemHovered() ? "Button hovered" : IsItemFocused() ? "Button focused" : "Button idle");
 
                     Group([&] {
@@ -203,8 +205,11 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                     SectionText("Inputs");
                     const char* renderModes[] {"Balanced", "Quality", "Performance", "Diagnostics"};
                     Dropdown("Render Mode", &state.RenderMode, renderModes);
+                    SetTooltip("Selects the demo render quality preset.");
                     InputText("Search assets", state.SearchText, sizeof(state.SearchText));
+                    SetTooltip("Typing here suppresses demo keybind logging.");
                     Keybind("Toggle Menu", &state.ToggleMenuKey, &state.ToggleMenuMode);
+                    SetTooltip("Click to capture a key. Right-click to choose Toggle or Hold.");
 
                     Spacing();
                     SectionText("Sliders");
@@ -235,6 +240,7 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                     Spacing();
                     SectionText("Color Edit");
                     ColorEdit("Accent Preview", &state.AccentPreview);
+                    SetTooltip("Opens a draggable color picker with RGBA byte fields.");
                     PushStyleColor(StyleColor::ButtonPrimary, state.AccentPreview);
                     PushStyleColor(StyleColor::ButtonPrimaryHovered, Color::Rgba(
                         (std::min)(255, static_cast<int>(state.AccentPreview.R * 255.0F) + 24),
@@ -281,6 +287,7 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                     Spacing();
                     SectionText("Draw Layers");
                     Checkbox("Show Draw Layer Test", &state.DrawLayerTest);
+                    SetTooltip("Shows a viewport overlay that verifies background, main, and foreground ordering.");
                     TextSecondary("Bottom-left overlay: background red, main green, foreground blue.");
 
                     Spacing();
@@ -294,6 +301,7 @@ inline void RenderComponentDemo(ComponentDemoState& state, Window& window, std::
                             if (ListItem(label, state.SelectedAsset == index)) {
                                 state.SelectedAsset = index;
                             }
+                            SetTooltip("Selects this generated asset row.");
                             PopId();
                         }
                     }, {0.0F, 224.0F * state.FrameScale});
